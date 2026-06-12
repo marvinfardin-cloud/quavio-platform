@@ -41,10 +41,17 @@ async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: str
   doc.rect(0, 0, 210, 60, 'F')
 
   if (logoDataUrl) {
-    doc.addImage(logoDataUrl, 'PNG', 8, 5, 50, 50)
+    const logoX = 10
+    const logoY = 8
+    const logoSize = 25
+    const radius = logoSize / 2
+    // White circle background for the logo
+    doc.setFillColor(255, 255, 255)
+    doc.circle(logoX + radius, logoY + radius, radius, 'F')
+    doc.addImage(logoDataUrl, 'PNG', logoX, logoY, logoSize, logoSize)
   }
 
-  const textX = logoDataUrl ? 63 : 14
+  const textX = logoDataUrl ? 48 : 14
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(16)
