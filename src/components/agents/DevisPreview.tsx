@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { DevisData, ClientConfig } from '@/types'
-import { Download } from 'lucide-react'
+import { Download, Mail } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface DevisPreviewProps {
@@ -159,8 +160,13 @@ async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: str
 }
 
 export default function DevisPreview({ devis, client }: DevisPreviewProps) {
+  const [showEmailInput, setShowEmailInput] = useState(false)
+  const [clientEmail, setClientEmail] = useState('')
+  const [lastDevisNum, setLastDevisNum] = useState('')
+
   async function downloadPDF() {
     const devisNum = `DEV-${Date.now().toString().slice(-6)}`
+    setLastDevisNum(devisNum)
     const doc = await buildPdfDoc(devis, client, devisNum)
     const pdfBase64 = doc.output('datauristring')
 
@@ -228,14 +234,66 @@ export default function DevisPreview({ devis, client }: DevisPreviewProps) {
         </div>
       </div>
 
-      <button
-        onClick={downloadPDF}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-semibold transition-opacity hover:opacity-90"
-        style={{ backgroundColor: client.primaryColor }}
-      >
-        <Download size={16} />
-        Télécharger le devis PDF
-      </button>
+      <div className="space-y-3">
+        <button
+          onClick={downloadPDF}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-semibold transition-opacity hover:opacity-90"
+          style={{ backgroundColor: client.primaryColor }}
+        >
+          <Download size={16} />
+          Télécharger le devis PDF
+        </button>
+
+        <button
+          onClick={() => setShowEmailInput((v) => !v)}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-opacity hover:opacity-80"
+          style={{ border: `1.5px solid ${client.primaryColor}`, color: client.primaryColor, backgroundColor: 'transparent' }}
+        >
+          <Mail size={16} />
+          Envoyer par email
+        </button>
+
+        {showEmailInput && (
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={clientEmail}
+              onChange={(e) => setClientEmail(e.target.value)}
+              placeholder="Email du client"
+              className="flex-1 px-3 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 text-sm"
+              style={{ fontSize: '16px' }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') sendEmail()
+              }}
+              autoFocus
+            />
+            <button
+              onClick={sendEmail}
+              disabled={!clientEmail.trim()}
+              className="px-4 py-2.5 rounded-xl text-white font-semibold text-sm transition-opacity hover:opacity-90 disabled:opacity-40"
+              style={{ backgroundColor: client.primaryColor }}
+            >
+              Envoyer
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
+
+  function sendEmail() {
+    const num = lastDevisNum || `DEV-??????`
+    const ttc = devis.totalTTC.toFixed(2).replace('.', ',')
+    const subject = encodeURIComponent(`Devis ${num} - Rosa Excavator`)
+    const body = encodeURIComponent(
+      `Bonjour,\n\nVeuillez trouver ci-joint votre devis ${num}.\n\n` +
+      `Montant TTC : ${ttc} €\n` +
+      `Validité : 30 jours\n\n` +
+      `Pour toute question, contactez-nous :\n` +
+      `Tél : +596 696 34 31 21\n` +
+      `Email : contact@rosaexcavator.com\n\n` +
+      `Cordialement,\nRosa Excavator - Rental and Service`
+    )
+    window.location.href = `mailto:${clientEmail.trim()}?subject=${subject}&body=${body}`
+  }
 }
