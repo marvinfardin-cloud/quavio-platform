@@ -5,7 +5,7 @@ const FALLBACK_CLIENTS: Record<string, ClientConfig> = {
   rosa: {
     id: 'rosa',
     slug: 'rosa',
-    name: 'ROSA Aménagement',
+    name: 'Rosa Excavator',
     primaryColor: '#E85D26',
     backgroundColor: '#0A0A0A',
     logoUrl: null,
