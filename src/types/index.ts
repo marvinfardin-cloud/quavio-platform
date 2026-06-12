@@ -44,7 +44,7 @@ export const AGENTS: Record<string, AgentConfig> = {
     name: 'Isaac',
     role: 'Générateur de Devis',
     description: 'Crée des devis professionnels à partir de votre description.',
-    photoUrl: '/agents/isaac.jpg',
+    photoUrl: '/agents/ISAAC.JPEG',
     color: '#E85D26',
   },
   zara: {
@@ -52,7 +52,7 @@ export const AGENTS: Record<string, AgentConfig> = {
     name: 'Zara',
     role: 'Assistante Communication',
     description: 'Rédige des réponses professionnelles à vos clients.',
-    photoUrl: '/agents/zara.jpg',
+    photoUrl: '/agents/ZARA.JPEG',
     color: '#6366f1',
   },
 }
