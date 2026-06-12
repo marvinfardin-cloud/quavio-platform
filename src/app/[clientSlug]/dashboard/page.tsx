@@ -90,16 +90,17 @@ export default async function DashboardPage({
                 key={agent.id}
                 href={`/${clientSlug}/agents/${agent.id}`}
                 className="relative overflow-hidden rounded-2xl flex flex-col cursor-pointer group"
-                style={{ height: '320px', backgroundColor: cardColor }}
+                style={{ height: '360px', backgroundColor: cardColor }}
               >
                 {/* Photo — top 70% */}
-                <div className="relative w-full" style={{ height: '230px' }}>
+                <div className="relative w-full" style={{ height: '270px' }}>
                   {photo ? (
                     <Image
                       src={photo}
                       alt={agent.name}
                       fill
-                      className="object-cover object-center"
+                      className="object-cover"
+                      style={{ objectPosition: 'center top' }}
                       sizes="(max-width: 768px) 100vw, 50vw"
                     />
                   ) : (
