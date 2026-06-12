@@ -25,7 +25,7 @@ async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: str
   // ── Load logo ────────────────────────────────────────────────
   let logoDataUrl: string | null = null
   try {
-    const res = await fetch('/rosa_logo.png')
+    const res = await fetch('/agents/rosa_logo.png')
     if (res.ok) {
       const blob = await res.blob()
       logoDataUrl = await new Promise<string>((resolve) => {

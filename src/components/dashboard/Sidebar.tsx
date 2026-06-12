@@ -19,7 +19,7 @@ function ReceiptIcon({ size = 20 }: { size?: number }) {
 
 interface SidebarProps {
   clientSlug: string
-  logoSrc: string
+  logoSrc?: string
 }
 
 const NAV_ITEMS = [
@@ -28,7 +28,7 @@ const NAV_ITEMS = [
   { key: 'settings', icon: Settings, label: 'Paramètres', href: (slug: string) => `/${slug}/settings` },
 ]
 
-export default function Sidebar({ clientSlug, logoSrc }: SidebarProps) {
+export default function Sidebar({ clientSlug }: SidebarProps) {
   const pathname = usePathname()
 
   function isActive(key: string) {
@@ -43,11 +43,11 @@ export default function Sidebar({ clientSlug, logoSrc }: SidebarProps) {
       {/* Logo */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={`${logoSrc}?v=2`}
-        alt="Logo"
-        width={36}
-        height={36}
-        className="rounded-full object-cover flex-shrink-0"
+        src="/agents/rosa_logo.png"
+        alt="Rosa Logo"
+        width={40}
+        height={40}
+        style={{ objectFit: 'contain', background: 'white', borderRadius: '50%', padding: '2px', flexShrink: 0 }}
       />
 
       {/* Nav icons */}
