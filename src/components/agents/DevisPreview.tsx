@@ -23,23 +23,44 @@ export default function DevisPreview({ devis, client }: DevisPreviewProps) {
     const devisNum = `DEV-${Date.now().toString().slice(-6)}`
     const date = new Date().toLocaleDateString('fr-FR')
 
+    // ── Load logo ────────────────────────────────────────────────
+    let logoDataUrl: string | null = null
+    try {
+      const res = await fetch('/rosa_logo.png')
+      if (res.ok) {
+        const blob = await res.blob()
+        logoDataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.readAsDataURL(blob)
+        })
+      }
+    } catch {}
+
     // ── Header band ──────────────────────────────────────────────
     doc.setFillColor(pr, pg, pb)
     doc.rect(0, 0, 210, 50, 'F')
 
+    // Logo top-left
+    if (logoDataUrl) {
+      doc.addImage(logoDataUrl, 'PNG', 15, 8, 35, 35)
+    }
+
+    // Company name to the right of the logo
+    const textX = logoDataUrl ? 55 : 14
     doc.setTextColor(255, 255, 255)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(16)
-    doc.text('Rosa Excavator — Rental and Service', 14, 16)
+    doc.text('Rosa Excavator — Rental and Service', textX, 16)
 
     doc.setFont('helvetica', 'italic')
     doc.setFontSize(7.5)
-    doc.text("Avec ROSA, chaque projet est guidé par la passion de l'embellissement extérieur", 14, 24)
+    doc.text("Avec ROSA, chaque projet est guidé par la passion de l'embellissement extérieur", textX, 24)
 
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
-    doc.text('533 Chemin Savane Dédé, 97232 Le Lamentin', 14, 32)
-    doc.text('Tél : +596 696 34 31 21   |   contact@rosaexcavator.com', 14, 39)
+    doc.text('533 Chemin Savane Dédé, 97232 Le Lamentin', textX, 32)
+    doc.text('Tél : +596 696 34 31 21   |   contact@rosaexcavator.com', textX, 39)
 
     // Devis number & date — top right
     doc.setFont('helvetica', 'bold')
@@ -123,16 +144,18 @@ export default function DevisPreview({ devis, client }: DevisPreviewProps) {
     doc.text(`${devis.totalTTC.toFixed(2)} €`, 193, y + 7, { align: 'right' })
 
     // ── Footer ───────────────────────────────────────────────────
-    doc.setTextColor(160, 160, 160)
-    doc.setFont('helvetica', 'italic')
-    doc.setFontSize(7.5)
+    doc.setDrawColor(220, 220, 220)
+    doc.line(14, 274, 196, 274)
+    doc.setTextColor(153, 153, 153)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7)
     doc.text(
-      'ROSA EXCAVATOR - RENTAL AND SERVICE  |  SIRET: 952 827 186 00018  |  TVA: FR16 952 827 186',
-      105, 278, { align: 'center' }
+      'ROSA EXCAVATOR - RENTAL AND SERVICE  |  SIRET : 952 827 186 00018  |  N° TVA : FR16 952 827 186  |  533 Chemin Savane Dédé, 97232 Le Lamentin',
+      105, 280, { align: 'center' }
     )
     doc.text(
-      '533 Chemin Savane Dédé, 97232 Le Lamentin  |  Devis valable 30 jours  |  Acompte 30% à la commande',
-      105, 284, { align: 'center' }
+      'Devis valable 30 jours  |  Acompte 30% à la commande',
+      105, 286, { align: 'center' }
     )
 
     doc.save(`devis-rosa-${devis.clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`)

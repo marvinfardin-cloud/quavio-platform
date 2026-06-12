@@ -37,12 +37,14 @@ export default async function DashboardPage({
         style={{ width: '60px', backgroundColor: '#0A0A0A', borderRight: '1px solid #1a1a1a' }}
       >
         {/* Logo */}
-        <div
-          className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-          style={{ backgroundColor: client.primaryColor }}
-        >
-          {client.name.charAt(0)}
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/rosa_logo.png"
+          alt="Rosa"
+          width={36}
+          height={36}
+          className="rounded-full object-cover flex-shrink-0"
+        />
 
         {/* Nav icons */}
         <nav className="flex flex-col items-center gap-6 mt-2">
