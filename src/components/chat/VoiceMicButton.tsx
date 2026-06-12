@@ -1,8 +1,6 @@
 'use client'
 
 export default function VoiceMicButton({
-  onTranscript: _onTranscript,
-  onAutoSend: _onAutoSend,
   disabled,
 }: {
   onTranscript: (t: string) => void
