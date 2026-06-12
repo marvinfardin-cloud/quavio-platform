@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
-import { Home, Bot, Settings } from 'lucide-react'
+import { Home, Bot, Settings, FileText } from 'lucide-react'
 import { getClientConfig } from '@/lib/clients'
 import { AGENTS } from '@/types'
 
@@ -125,6 +125,22 @@ export default async function DashboardPage({
               </Link>
             )
           })}
+
+          {/* Devis history card */}
+          <Link
+            href={`/${clientSlug}/devis`}
+            className="relative overflow-hidden rounded-2xl flex flex-col cursor-pointer group"
+            style={{ height: '360px', backgroundColor: '#1a1a1a' }}
+          >
+            <div className="w-full flex items-center justify-center" style={{ height: '270px' }}>
+              <FileText size={80} style={{ color: '#C4607A', opacity: 0.6 }} />
+            </div>
+            <div className="flex flex-col justify-center px-5 flex-1">
+              <p className="text-white font-bold text-base leading-tight">Historique Devis</p>
+              <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>Retrouvez tous vos devis générés</p>
+            </div>
+            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-5 transition-opacity rounded-2xl" />
+          </Link>
         </div>
       </main>
     </div>
