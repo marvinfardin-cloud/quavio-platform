@@ -29,13 +29,12 @@ TVA applicable : 8.5% (taux Martinique).
 Calcule les totaux automatiquement.
 Réponds toujours en français. Sois concis et professionnel.`
 
-// Extract a euro amount from a line like "TOTAL HT: 1 500,00 €" or "TOTAL HT: 1500.00 €"
+// Extract a euro amount from a single line: "TOTAL HT: 1 500,00 €"
+// Finds the label, then grabs the first number on THAT line only.
 function parseAmount(text: string, label: string): number {
-  // Match the label then capture everything up to optional € or end-of-line
-  const re = new RegExp(label + '[:\\s]+([\\d\\s.,]+)\\s*€?', 'i')
+  const re = new RegExp(label + '[^\\d\\n]*([\\d][\\d.,]*(?: [\\d]{3})*)', 'i')
   const m = text.match(re)
   if (!m) return 0
-  // Strip thousand-separator spaces, normalise decimal comma → dot
   const cleaned = m[1].replace(/\s/g, '').replace(',', '.')
   return parseFloat(cleaned) || 0
 }
@@ -74,15 +73,21 @@ function parseDevis(text: string) {
 
     if (!services.length) return null
 
-    console.log('[Isaac] parsed devis — totalHT:', totalHT, 'tva:', tva, 'totalTTC:', totalTTC)
+    // Fallback: if regex parsing yielded suspicious values, compute from services
+    const sumHT = Math.round(services.reduce((acc, s) => acc + s.total, 0) * 100) / 100
+    const finalHT  = totalHT  > sumHT * 0.5 ? totalHT  : sumHT
+    const finalTva = tva      > 0            ? tva      : Math.round(finalHT * 0.085 * 100) / 100
+    const finalTTC = totalTTC > finalHT      ? totalTTC : Math.round((finalHT + finalTva) * 100) / 100
+
+    console.log('[Isaac] devis — sumHT:', sumHT, 'finalHT:', finalHT, 'tva:', finalTva, 'totalTTC:', finalTTC)
 
     return {
       clientName: clientMatch?.[1]?.trim() ?? 'Client',
       clientAddress: adresseMatch?.[1]?.trim() ?? '',
       services,
-      totalHT,
-      tva,
-      totalTTC,
+      totalHT:  finalHT,
+      tva:      finalTva,
+      totalTTC: finalTTC,
     }
   } catch {
     return null
