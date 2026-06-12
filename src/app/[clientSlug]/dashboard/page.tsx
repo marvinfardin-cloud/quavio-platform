@@ -6,7 +6,7 @@ import { getClientConfig } from '@/lib/clients'
 import { AGENTS } from '@/types'
 
 const AGENT_CARD_COLORS: Record<string, string> = {
-  isaac: '#E85D26',
+  isaac: '#C4607A',
   zara: '#7C3AED',
 }
 

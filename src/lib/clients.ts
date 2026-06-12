@@ -6,7 +6,7 @@ const FALLBACK_CLIENTS: Record<string, ClientConfig> = {
     id: 'rosa',
     slug: 'rosa',
     name: 'Rosa Excavator',
-    primaryColor: '#E85D26',
+    primaryColor: '#C4607A',
     backgroundColor: '#0A0A0A',
     logoUrl: null,
     enabledAgents: ['isaac', 'zara'],

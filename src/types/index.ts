@@ -45,7 +45,7 @@ export const AGENTS: Record<string, AgentConfig> = {
     role: 'Générateur de Devis',
     description: 'Crée des devis professionnels à partir de votre description.',
     photoUrl: '/agents/ISAAC.JPEG',
-    color: '#E85D26',
+    color: '#C4607A',
   },
   zara: {
     id: 'zara',

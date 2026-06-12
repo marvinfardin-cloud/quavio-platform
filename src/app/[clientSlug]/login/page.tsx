@@ -47,7 +47,7 @@ export default function LoginPage() {
         <div className="mb-10 text-center">
           <div
             className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 text-white text-2xl font-bold"
-            style={{ backgroundColor: 'var(--primary, #E85D26)' }}
+            style={{ backgroundColor: 'var(--primary, #C4607A)' }}
           >
             R
           </div>
@@ -67,7 +67,7 @@ export default function LoginPage() {
               required
               className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-[--primary] transition-colors"
               placeholder="vous@exemple.com"
-              style={{ '--primary': 'var(--primary, #E85D26)' } as React.CSSProperties}
+              style={{ '--primary': 'var(--primary, #C4607A)' } as React.CSSProperties}
             />
           </div>
 
@@ -89,7 +89,7 @@ export default function LoginPage() {
             type="submit"
             disabled={loading}
             className="w-full py-3 rounded-xl font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-            style={{ backgroundColor: 'var(--primary, #E85D26)' }}
+            style={{ backgroundColor: 'var(--primary, #C4607A)' }}
           >
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
