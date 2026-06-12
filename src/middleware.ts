@@ -1,8 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export const runtime = 'nodejs'
-
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -15,7 +13,9 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          )
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -25,20 +25,16 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
 
   // Protect dashboard and agent routes
-  const isProtected =
-    pathname.includes('/dashboard') || pathname.includes('/agents/')
-
-  if (isProtected && !user) {
-    const slug = pathname.split('/')[1]
-    const loginUrl = new URL(`/${slug}/login`, request.url)
-    return NextResponse.redirect(loginUrl)
+  if (pathname.includes('/dashboard') || pathname.includes('/agents')) {
+    if (!user) {
+      const loginUrl = new URL(`/${pathname.split('/')[1]}/login`, request.url)
+      return NextResponse.redirect(loginUrl)
+    }
   }
 
   return supabaseResponse
