@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
-import { Home, Bot, Settings, FileText } from 'lucide-react'
+import { FileText } from 'lucide-react'
 import { getClientConfig } from '@/lib/clients'
 import { AGENTS } from '@/types'
 import SetupBanner from '@/components/dashboard/SetupBanner'
+import Sidebar from '@/components/dashboard/Sidebar'
 
 const AGENT_CARD_COLORS: Record<string, string> = {
   isaac: '#C4607A',
@@ -33,33 +34,7 @@ export default async function DashboardPage({
     <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#0F0F0F', fontFamily: 'var(--font-space-grotesk)' }}>
 
       {/* ── Sidebar ─────────────────────────────────────────── */}
-      <aside
-        className="flex flex-col items-center py-6 gap-8 flex-shrink-0"
-        style={{ width: '60px', backgroundColor: '#0A0A0A', borderRight: '1px solid #1a1a1a' }}
-      >
-        {/* Logo */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/rosa_logo.png"
-          alt="Rosa"
-          width={36}
-          height={36}
-          className="rounded-full object-cover flex-shrink-0"
-        />
-
-        {/* Nav icons */}
-        <nav className="flex flex-col items-center gap-6 mt-2">
-          <button className="text-white opacity-90 hover:opacity-100 transition-opacity" title="Accueil">
-            <Home size={20} />
-          </button>
-          <button className="text-zinc-500 hover:text-white transition-colors" title="Agents">
-            <Bot size={20} />
-          </button>
-          <Link href={`/${clientSlug}/settings`} className="text-zinc-500 hover:text-white transition-colors" title="Paramètres">
-            <Settings size={20} />
-          </Link>
-        </nav>
-      </aside>
+      <Sidebar clientSlug={clientSlug} logoSrc="/rosa_logo.png" />
 
       {/* ── Main ────────────────────────────────────────────── */}
       <main className="flex-1 flex flex-col overflow-y-auto px-10 py-10">
