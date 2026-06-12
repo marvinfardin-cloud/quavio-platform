@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function Home() {
-  redirect('/rosa/login')
+  redirect('/rosa/dashboard')
 }

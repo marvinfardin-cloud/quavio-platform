@@ -1,9 +1,7 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { getClientConfig } from '@/lib/clients'
 import { AGENTS } from '@/types'
-import LogoutButton from '@/components/LogoutButton'
 
 export default async function DashboardPage({
   params,
@@ -11,14 +9,6 @@ export default async function DashboardPage({
   params: Promise<{ clientSlug: string }>
 }) {
   const { clientSlug } = await params
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect(`/${clientSlug}/login`)
-
   const client = await getClientConfig(clientSlug)
   if (!client) redirect('/')
 
@@ -40,10 +30,6 @@ export default async function DashboardPage({
             {client.name.charAt(0)}
           </div>
           <span className="text-white font-semibold">{client.name}</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-zinc-400 text-sm">{user.email}</span>
-          <LogoutButton clientSlug={clientSlug} />
         </div>
       </header>
 
