@@ -59,7 +59,7 @@ export default function ZaraChat({
       const res = await fetch('/api/agents/zara', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages, clientSlug: client.slug }),
       })
 
       const data = await res.json()

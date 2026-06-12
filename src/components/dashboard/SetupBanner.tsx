@@ -3,23 +3,25 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, X } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function SetupBanner({ clientSlug }: { clientSlug: string }) {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
-    const key = `quavio_config_${clientSlug}`
-    const raw = localStorage.getItem(key)
-    if (!raw) {
-      setShow(true)
-      return
+    async function check() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('client_config')
+        .select('company_name, services_pricing')
+        .eq('client_slug', clientSlug)
+        .single()
+
+      if (!data || (!data.company_name && !data.services_pricing)) {
+        setShow(true)
+      }
     }
-    try {
-      const cfg = JSON.parse(raw)
-      if (!cfg.companyName && !cfg.servicesAndRates) setShow(true)
-    } catch {
-      setShow(true)
-    }
+    check()
   }, [clientSlug])
 
   if (!show) return null
