@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Settings, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { QuavioConfig, DEFAULT_CONFIG, getStorageKey, loadConfig } from '@/lib/quavioConfig'
+import Sidebar from '@/components/dashboard/Sidebar'
 
 export default function SettingsPage() {
   const { clientSlug } = useParams<{ clientSlug: string }>()
@@ -30,12 +31,14 @@ export default function SettingsPage() {
 
   return (
     <div
-      className="min-h-screen"
+      className="flex h-screen overflow-hidden"
       style={{ backgroundColor: '#0F0F0F', fontFamily: 'var(--font-space-grotesk)' }}
     >
+      <Sidebar clientSlug={clientSlug} logoSrc="/rosa_logo.png" />
+      <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div
-        className="flex items-center gap-4 px-8 py-5 border-b sticky top-0 z-10"
+        className="flex items-center gap-4 px-8 py-5 border-b flex-shrink-0"
         style={{ backgroundColor: '#0A0A0A', borderColor: '#1a1a1a' }}
       >
         <button
@@ -50,6 +53,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      <div className="flex-1 overflow-y-auto">
       <form onSubmit={save} className="max-w-2xl mx-auto px-6 py-10 space-y-10">
 
         {/* INFORMATIONS ENTREPRISE */}
@@ -190,6 +194,8 @@ export default function SettingsPage() {
           border-color: #C4607A;
         }
       `}</style>
+      </div>
+      </div>
     </div>
   )
 }

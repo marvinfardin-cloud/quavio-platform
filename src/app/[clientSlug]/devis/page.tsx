@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, FileText, Download } from 'lucide-react'
+import Sidebar from '@/components/dashboard/Sidebar'
 
 interface DevisRow {
   id: string
@@ -54,12 +55,15 @@ export default function DevisHistoryPage() {
 
   return (
     <div
-      className="min-h-screen"
+      className="flex h-screen overflow-hidden"
       style={{ backgroundColor: '#0F0F0F', fontFamily: 'var(--font-space-grotesk)' }}
     >
+      <Sidebar clientSlug={clientSlug} logoSrc="/rosa_logo.png" />
+
+      <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div
-        className="flex items-center gap-4 px-8 py-5 border-b"
+        className="flex items-center gap-4 px-8 py-5 border-b flex-shrink-0"
         style={{ backgroundColor: '#0A0A0A', borderColor: '#1a1a1a' }}
       >
         <button
@@ -74,7 +78,7 @@ export default function DevisHistoryPage() {
         </div>
       </div>
 
-      <div className="px-8 py-8 max-w-5xl mx-auto">
+      <div className="px-8 py-8 max-w-5xl mx-auto overflow-y-auto flex-1 w-full">
         {loading ? (
           <p className="text-zinc-500 text-sm">Chargement...</p>
         ) : devisList.length === 0 ? (
@@ -137,6 +141,7 @@ export default function DevisHistoryPage() {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   )

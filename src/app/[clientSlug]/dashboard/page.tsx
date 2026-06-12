@@ -47,19 +47,6 @@ export default async function DashboardPage({
         {/* First-time setup banner */}
         <SetupBanner clientSlug={clientSlug} />
 
-        {/* Search bar */}
-        <div className="max-w-xl mx-auto w-full mb-10">
-          <div
-            className="flex items-center gap-3 px-5 py-3 rounded-2xl"
-            style={{ backgroundColor: '#1a1a1a' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-            <span style={{ color: '#555', fontSize: '14px' }}>Que recherchez-vous ?</span>
-          </div>
-        </div>
-
         {/* Agent cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto w-full">
           {enabledAgents.map((agent) => {

@@ -50,8 +50,8 @@ export const AGENTS: Record<string, AgentConfig> = {
   zara: {
     id: 'zara',
     name: 'Zara',
-    role: 'Assistante Communication',
-    description: 'Rédige des réponses professionnelles à vos clients.',
+    role: 'Assistante Planning',
+    description: 'Organise le planning hebdomadaire de vos équipes.',
     photoUrl: '/agents/ZARA.JPEG',
     color: '#6366f1',
   },

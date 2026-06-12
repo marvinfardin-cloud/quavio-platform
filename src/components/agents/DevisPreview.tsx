@@ -48,7 +48,7 @@ async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: str
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(16)
-  doc.text('Rosa Aménagement', textX, 20)
+  doc.text('Rosa Excavator — Rental and Service', textX, 20)
 
   doc.setFont('helvetica', 'italic')
   doc.setFontSize(7.5)
@@ -57,7 +57,7 @@ async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: str
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
   doc.text('533 Chemin Savane Dédé, 97232 Le Lamentin', textX, 38)
-  doc.text('Tél : +596 696 34 31 21   |   contact@rosaamenagement.com', textX, 46)
+  doc.text('Tél : +596 696 34 31 21   |   contact@rosaexcavator.com', textX, 46)
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)

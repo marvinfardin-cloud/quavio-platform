@@ -12,11 +12,11 @@ const ZARA_PHOTO = '/agents/ZARA.JPEG'
 
 const WELCOME_MESSAGE: Message = {
   role: 'assistant',
-  content: `Bonjour ! Je suis Zara, votre assistante communication. 💬
+  content: `Bonjour ! Je suis Zara, votre assistante planning.
 
-Collez le message d'un client et je vous proposerai une réponse professionnelle adaptée à l'image de ROSA Aménagement.
+Décrivez-moi les chantiers de la semaine et vos 4 employés disponibles, je génère le planning.
 
-Par exemple : *"Bonjour, j'aimerais un devis pour mon jardin, pouvez-vous venir cette semaine ?"*`,
+Par exemple : "Cette semaine : chantier Martin lundi-mardi, chantier Dupont mercredi, livraison matériel jeudi. Employés : Jean, Marc, Lucie, Sophie."`,
   timestamp: new Date().toISOString(),
 }
 
@@ -103,7 +103,7 @@ export default function ZaraChat({
         </div>
         <div>
           <h1 className="text-white font-semibold">Zara</h1>
-          <p className="text-zinc-500 text-xs">Assistante Communication</p>
+          <p className="text-zinc-500 text-xs">Assistante Planning</p>
         </div>
       </header>
 
