@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { Home, Bot, Settings, FileText } from 'lucide-react'
 import { getClientConfig } from '@/lib/clients'
 import { AGENTS } from '@/types'
+import SetupBanner from '@/components/dashboard/SetupBanner'
 
 const AGENT_CARD_COLORS: Record<string, string> = {
   isaac: '#C4607A',
@@ -54,9 +55,9 @@ export default async function DashboardPage({
           <button className="text-zinc-500 hover:text-white transition-colors" title="Agents">
             <Bot size={20} />
           </button>
-          <button className="text-zinc-500 hover:text-white transition-colors" title="Paramètres">
+          <Link href={`/${clientSlug}/settings`} className="text-zinc-500 hover:text-white transition-colors" title="Paramètres">
             <Settings size={20} />
-          </button>
+          </Link>
         </nav>
       </aside>
 
@@ -67,6 +68,9 @@ export default async function DashboardPage({
         <h1 className="text-center text-3xl font-bold text-white mb-6 tracking-tight">
           Bonjour, Rosa
         </h1>
+
+        {/* First-time setup banner */}
+        <SetupBanner clientSlug={clientSlug} />
 
         {/* Search bar */}
         <div className="max-w-xl mx-auto w-full mb-10">

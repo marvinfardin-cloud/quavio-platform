@@ -82,14 +82,45 @@ function parseDevis(text: string) {
   }
 }
 
+interface CompanyConfig {
+  companyName?: string
+  slogan?: string
+  siret?: string
+  tva?: string
+  address?: string
+  phone?: string
+  email?: string
+  servicesAndRates?: string
+  additionalInfo?: string
+}
+
+function buildSystemPrompt(companyConfig: CompanyConfig | null): string {
+  if (!companyConfig) return ISAAC_SYSTEM
+
+  const parts: string[] = []
+  if (companyConfig.companyName) parts.push(`Entreprise : ${companyConfig.companyName}`)
+  if (companyConfig.slogan) parts.push(`Slogan : ${companyConfig.slogan}`)
+  if (companyConfig.siret) parts.push(`SIRET : ${companyConfig.siret}`)
+  if (companyConfig.tva) parts.push(`N° TVA : ${companyConfig.tva}`)
+  if (companyConfig.address) parts.push(`Adresse : ${companyConfig.address}`)
+  if (companyConfig.phone) parts.push(`Téléphone : ${companyConfig.phone}`)
+  if (companyConfig.email) parts.push(`Email : ${companyConfig.email}`)
+  if (companyConfig.servicesAndRates) parts.push(`\nTarifs et services :\n${companyConfig.servicesAndRates}`)
+  if (companyConfig.additionalInfo) parts.push(`\nInformations complémentaires :\n${companyConfig.additionalInfo}`)
+
+  if (!parts.length) return ISAAC_SYSTEM
+
+  return `${ISAAC_SYSTEM}\n\n--- CONFIGURATION ENTREPRISE ---\n${parts.join('\n')}`
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json()
+    const { messages, companyConfig } = await req.json()
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2048,
-      system: ISAAC_SYSTEM,
+      system: buildSystemPrompt(companyConfig ?? null),
       messages: messages.map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,

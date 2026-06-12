@@ -55,6 +55,13 @@ export default function IsaacChat({
     setLoading(true)
 
     try {
+      const storageKey = `quavio_config_${client.slug}`
+      let companyConfig: Record<string, string> | null = null
+      try {
+        const raw = localStorage.getItem(storageKey)
+        if (raw) companyConfig = JSON.parse(raw)
+      } catch {}
+
       const res = await fetch('/api/agents/isaac', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,6 +70,7 @@ export default function IsaacChat({
             role: m.role,
             content: m.content,
           })),
+          companyConfig,
         }),
       })
 
