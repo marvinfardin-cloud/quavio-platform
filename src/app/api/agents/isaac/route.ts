@@ -29,15 +29,6 @@ TVA applicable : 8.5% (taux Martinique).
 Calcule les totaux automatiquement.
 Réponds toujours en français. Sois concis et professionnel.`
 
-// Extract a euro amount from a single line: "TOTAL HT: 1 500,00 €"
-// Finds the label, then grabs the first number on THAT line only.
-function parseAmount(text: string, label: string): number {
-  const re = new RegExp(label + '[^\\d\\n]*([\\d][\\d.,]*(?: [\\d]{3})*)', 'i')
-  const m = text.match(re)
-  if (!m) return 0
-  const cleaned = m[1].replace(/\s/g, '').replace(',', '.')
-  return parseFloat(cleaned) || 0
-}
 
 function parseDevis(text: string) {
   if (!text.includes('CLIENT:') || !text.includes('TOTAL TTC:')) return null
@@ -46,9 +37,6 @@ function parseDevis(text: string) {
     const clientMatch = text.match(/CLIENT:\s*(.+)/)
     const adresseMatch = text.match(/ADRESSE:\s*(.+)/)
 
-    const totalHT  = parseAmount(text, 'TOTAL HT')
-    const tva      = parseAmount(text, 'TVA 8[.,]5%')
-    const totalTTC = parseAmount(text, 'TOTAL TTC')
 
     const servicesSection = text.match(/PRESTATIONS:\n([\s\S]*?)(?:\nTOTAL HT:)/)
     const services: Array<{ description: string; quantity: number; unit: string; unitPrice: number; total: number }> = []
@@ -73,19 +61,19 @@ function parseDevis(text: string) {
 
     if (!services.length) return null
 
-    // Fallback: if regex parsing yielded suspicious values, compute from services
-    const sumHT = Math.round(services.reduce((acc, s) => acc + s.total, 0) * 100) / 100
-    const finalHT  = totalHT  > sumHT * 0.5 ? totalHT  : sumHT
-    const finalTva = tva      > 0            ? tva      : Math.round(finalHT * 0.085 * 100) / 100
-    const finalTTC = totalTTC > finalHT      ? totalTTC : Math.round((finalHT + finalTva) * 100) / 100
+    // Always compute totals from the services array — this is the ground truth.
+    // Parsed values from text are unreliable (regex can grab a line-item price).
+    const sumHT  = Math.round(services.reduce((acc, s) => acc + s.total, 0) * 100) / 100
+    const finalTva = Math.round(sumHT * 0.085 * 100) / 100
+    const finalTTC = Math.round((sumHT + finalTva) * 100) / 100
 
-    console.log('[Isaac] devis — sumHT:', sumHT, 'finalHT:', finalHT, 'tva:', finalTva, 'totalTTC:', finalTTC)
+    console.log('[Isaac] services:', services.map(s => s.total), 'sumHT:', sumHT, 'tva:', finalTva, 'TTC:', finalTTC)
 
     return {
       clientName: clientMatch?.[1]?.trim() ?? 'Client',
       clientAddress: adresseMatch?.[1]?.trim() ?? '',
       services,
-      totalHT:  finalHT,
+      totalHT:  sumHT,
       tva:      finalTva,
       totalTTC: finalTTC,
     }
