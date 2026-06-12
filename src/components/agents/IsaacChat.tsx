@@ -10,11 +10,11 @@ import { ArrowLeft, Send, FileText } from 'lucide-react'
 
 const WELCOME_MESSAGE: Message = {
   role: 'assistant',
-  content: `Bonjour ! Je suis Isaac, votre assistant devis. 🏗️
+  content: `Bonjour ! Je suis Isaac, votre assistant devis Rosa Excavator.
 
-Décrivez-moi le chantier et je vous aide à créer un devis professionnel. Par exemple :
+Décrivez-moi le chantier et je génère un devis complet. Par exemple :
 
-*"Je dois faire un devis pour M. Dupont à Lyon — plantation de 15 arbustes et création d'une terrasse de 30m²"*
+"Devis pour M. Martin à Le Lamentin — terrassement 200m², évacuation gravats"
 
 Commencez !`,
   timestamp: new Date().toISOString(),
