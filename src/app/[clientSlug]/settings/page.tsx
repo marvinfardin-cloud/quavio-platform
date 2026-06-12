@@ -6,6 +6,7 @@ import { ArrowLeft, Settings, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import Sidebar from '@/components/dashboard/Sidebar'
+import BottomNav from '@/components/dashboard/BottomNav'
 
 interface Config {
   companyName: string
@@ -99,13 +100,13 @@ export default function SettingsPage() {
       className="flex h-screen overflow-hidden"
       style={{ backgroundColor: '#0F0F0F', fontFamily: 'var(--font-space-grotesk)' }}
     >
-      <Sidebar clientSlug={clientSlug} logoSrc="/rosa_logo.png" />
+      <div className="hidden lg:block"><Sidebar clientSlug={clientSlug} /></div>
       <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Header */}
         <div
-          className="flex items-center gap-4 px-8 py-5 border-b flex-shrink-0"
-          style={{ backgroundColor: '#0A0A0A', borderColor: '#1a1a1a' }}
+          className="flex items-center gap-3 px-4 lg:px-8 py-4 border-b flex-shrink-0"
+          style={{ backgroundColor: '#0A0A0A', borderColor: '#1a1a1a', paddingTop: 'max(16px, env(safe-area-inset-top))' }}
         >
           <button
             onClick={() => router.push(`/${clientSlug}/dashboard`)}
@@ -125,7 +126,7 @@ export default function SettingsPage() {
               <p className="text-zinc-500 text-sm">Chargement...</p>
             </div>
           ) : (
-            <form onSubmit={save} className="max-w-2xl mx-auto px-6 py-10 space-y-10">
+            <form onSubmit={save} className="max-w-2xl mx-auto px-4 lg:px-6 py-6 lg:py-10 space-y-8 lg:space-y-10 pb-24 lg:pb-10">
 
               {/* INFORMATIONS ENTREPRISE */}
               <section>
@@ -202,6 +203,8 @@ export default function SettingsPage() {
                 </Field>
               </section>
 
+              <div className="lg:block fixed lg:static bottom-20 left-4 right-4 lg:bottom-auto lg:left-auto lg:right-auto z-10"
+                style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
               <button
                 type="submit"
                 disabled={saving}
@@ -211,6 +214,7 @@ export default function SettingsPage() {
                 {saved ? <Check size={18} /> : null}
                 {saving ? 'Sauvegarde...' : saved ? 'Sauvegardé !' : 'Sauvegarder la configuration'}
               </button>
+              </div>
             </form>
           )}
         </div>
@@ -232,6 +236,8 @@ export default function SettingsPage() {
         .ifield::placeholder { color: #444; }
         .ifield:focus { border-color: #C4607A; }
       `}</style>
+
+      <BottomNav clientSlug={clientSlug} />
     </div>
   )
 }

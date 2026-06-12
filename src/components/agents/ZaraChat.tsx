@@ -148,21 +148,22 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg, #0A0A0A)' }}>
-      <header className="border-b border-zinc-800 px-6 py-4 flex items-center gap-4">
-        <Link href={`/${client.slug}/dashboard`} className="text-zinc-400 hover:text-white transition-colors">
+    <div className="h-screen flex flex-col" style={{ backgroundColor: '#0A0A0A' }}>
+      <header className="flex-shrink-0 border-b border-zinc-800 px-4 py-3 flex items-center gap-3"
+        style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
+        <Link href={`/${client.slug}/dashboard`} className="text-zinc-400 p-1 -ml-1 min-h-[44px] flex items-center">
           <ArrowLeft size={20} />
         </Link>
-        <div className="w-9 h-9 rounded-full overflow-hidden relative flex-shrink-0">
+        <div className="w-8 h-8 rounded-full overflow-hidden relative flex-shrink-0">
           <Image src={ZARA_PHOTO} alt="Zara" fill className="object-cover object-top" />
         </div>
-        <div>
-          <h1 className="text-white font-semibold">Zara — Assistante Personnelle</h1>
+        <div className="min-w-0">
+          <h1 className="text-white font-semibold text-sm leading-tight">Zara — Assistante Personnelle</h1>
           <p className="text-zinc-500 text-xs">Planning, communications, documents...</p>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.map((msg, i) => (
           <div key={i} className="group relative">
             <ChatMessage
@@ -172,7 +173,7 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
               agentPhoto={ZARA_PHOTO}
             />
             {msg.role === 'assistant' && i > 0 && (
-              <div className="flex gap-2 mt-1 ml-11">
+              <div className="flex flex-wrap gap-2 mt-1 ml-11">
                 <button
                   onClick={() => copyMessage(msg.content, i)}
                   className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-colors text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
@@ -213,8 +214,9 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-zinc-800 px-6 py-4">
-        <form onSubmit={sendMessage} className="flex gap-3">
+      <div className="flex-shrink-0 border-t border-zinc-800 px-4 py-3"
+        style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+        <form onSubmit={sendMessage} className="flex gap-2">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -226,18 +228,19 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
             }}
             placeholder="Décrivez ce dont vous avez besoin..."
             rows={2}
-            className="flex-1 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 transition-colors text-sm resize-none"
+            className="flex-1 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 transition-colors resize-none min-h-[48px]"
+            style={{ fontSize: '16px' }}
             disabled={loading}
           />
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="px-4 rounded-xl text-white transition-opacity hover:opacity-90 disabled:opacity-40 bg-indigo-500 self-end pb-3 pt-3"
+            className="px-4 rounded-xl text-white transition-opacity hover:opacity-90 disabled:opacity-40 bg-indigo-500 self-end min-h-[48px] min-w-[48px]"
           >
             <Send size={18} />
           </button>
         </form>
-        <p className="text-zinc-600 text-xs mt-2">Entrée pour envoyer · Maj+Entrée pour nouvelle ligne</p>
+        <p className="hidden sm:block text-zinc-600 text-xs mt-2">Entrée pour envoyer · Maj+Entrée pour nouvelle ligne</p>
       </div>
     </div>
   )

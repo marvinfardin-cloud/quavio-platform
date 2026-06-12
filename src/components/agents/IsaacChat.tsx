@@ -7,7 +7,7 @@ import { ClientConfig, Message, DevisData } from '@/types'
 import ChatMessage from '@/components/chat/ChatMessage'
 import DevisPreview from '@/components/agents/DevisPreview'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Send, FileText } from 'lucide-react'
+import { ArrowLeft, Send, FileText, X } from 'lucide-react'
 
 const ISAAC_PHOTO = '/agents/ISAAC.JPEG'
 
@@ -33,6 +33,7 @@ export default function IsaacChat({
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [currentDevis, setCurrentDevis] = useState<DevisData | null>(null)
+  const [showDevis, setShowDevis] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -80,7 +81,8 @@ export default function IsaacChat({
 
       if (data.devis) {
         setCurrentDevis(data.devis)
-        toast.success('Devis généré ! Vous pouvez le télécharger.')
+        setShowDevis(true)
+        toast.success('Devis généré !')
       }
     } catch {
       toast.error('Erreur de connexion. Réessayez.')
@@ -90,30 +92,38 @@ export default function IsaacChat({
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--bg, #0A0A0A)' }}
-    >
-      <header className="border-b border-zinc-800 px-6 py-4 flex items-center gap-4">
-        <Link
-          href={`/${client.slug}/dashboard`}
-          className="text-zinc-400 hover:text-white transition-colors"
-        >
+    <div className="h-screen flex flex-col" style={{ backgroundColor: '#0A0A0A' }}>
+
+      {/* Header */}
+      <header className="flex-shrink-0 border-b border-zinc-800 px-4 py-3 flex items-center gap-3"
+        style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
+        <Link href={`/${client.slug}/dashboard`} className="text-zinc-400 p-1 -ml-1 min-h-[44px] flex items-center">
           <ArrowLeft size={20} />
         </Link>
-        <div className="w-9 h-9 rounded-full overflow-hidden relative flex-shrink-0">
+        <div className="w-8 h-8 rounded-full overflow-hidden relative flex-shrink-0">
           <Image src={ISAAC_PHOTO} alt="Isaac" fill className="object-cover object-top" />
         </div>
-        <div>
-          <h1 className="text-white font-semibold">Isaac</h1>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-white font-semibold text-sm leading-tight">Isaac</h1>
           <p className="text-zinc-500 text-xs">Générateur de Devis</p>
         </div>
+        {currentDevis && (
+          <button
+            onClick={() => setShowDevis(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-xs font-medium min-h-[44px]"
+            style={{ backgroundColor: client.primaryColor }}
+          >
+            <FileText size={14} />
+            <span className="hidden sm:inline">Voir devis</span>
+          </button>
+        )}
       </header>
 
+      {/* Chat area */}
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1 overflow-y-auto py-6 space-y-4">
-            <div className="max-w-2xl mx-auto px-8 space-y-4">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto py-4 space-y-3">
+            <div className="px-4 space-y-3 max-w-2xl mx-auto w-full">
               {messages.map((msg, i) => (
                 <ChatMessage
                   key={i}
@@ -131,11 +141,8 @@ export default function IsaacChat({
                   <div className="bg-zinc-800 rounded-2xl rounded-tl-sm px-4 py-3">
                     <div className="flex gap-1">
                       {[0, 1, 2].map((i) => (
-                        <div
-                          key={i}
-                          className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce"
-                          style={{ animationDelay: `${i * 0.15}s` }}
-                        />
+                        <div key={i} className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce"
+                          style={{ animationDelay: `${i * 0.15}s` }} />
                       ))}
                     </div>
                   </div>
@@ -145,19 +152,22 @@ export default function IsaacChat({
             </div>
           </div>
 
-          <div className="border-t border-zinc-800 px-6 py-4">
-            <form onSubmit={sendMessage} className="flex gap-3 max-w-2xl mx-auto">
+          {/* Input bar */}
+          <div className="flex-shrink-0 border-t border-zinc-800 px-4 py-3"
+            style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+            <form onSubmit={sendMessage} className="flex gap-2 max-w-2xl mx-auto">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Décrivez le chantier..."
-                className="flex-1 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 transition-colors text-sm"
+                className="flex-1 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 transition-colors min-h-[48px]"
+                style={{ fontSize: '16px' }}
                 disabled={loading}
               />
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className="px-4 py-3 rounded-xl text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+                className="px-4 rounded-xl text-white transition-opacity hover:opacity-90 disabled:opacity-40 min-h-[48px] min-w-[48px]"
                 style={{ backgroundColor: client.primaryColor }}
               >
                 <Send size={18} />
@@ -166,16 +176,39 @@ export default function IsaacChat({
           </div>
         </div>
 
-        {currentDevis && (
-          <div className="w-96 border-l border-zinc-800 overflow-y-auto">
+        {/* Devis panel — desktop side panel */}
+        {currentDevis && showDevis && (
+          <div className="hidden lg:flex w-96 border-l border-zinc-800 flex-col overflow-hidden">
             <div className="px-6 py-4 border-b border-zinc-800 flex items-center gap-2">
               <FileText size={16} className="text-zinc-400" />
-              <span className="text-white text-sm font-medium">Aperçu du devis</span>
+              <span className="text-white text-sm font-medium flex-1">Aperçu du devis</span>
+              <button onClick={() => setShowDevis(false)} className="text-zinc-500 hover:text-white">
+                <X size={16} />
+              </button>
             </div>
-            <DevisPreview devis={currentDevis} client={client} />
+            <div className="overflow-y-auto flex-1">
+              <DevisPreview devis={currentDevis} client={client} />
+            </div>
           </div>
         )}
       </div>
+
+      {/* Devis modal — mobile full screen overlay */}
+      {currentDevis && showDevis && (
+        <div className="lg:hidden fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: '#0A0A0A' }}>
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800"
+            style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
+            <FileText size={16} style={{ color: '#C4607A' }} />
+            <span className="text-white text-sm font-medium flex-1">Aperçu du devis</span>
+            <button onClick={() => setShowDevis(false)} className="text-zinc-400 p-1 min-h-[44px] flex items-center">
+              <X size={20} />
+            </button>
+          </div>
+          <div className="overflow-y-auto flex-1" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+            <DevisPreview devis={currentDevis} client={client} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

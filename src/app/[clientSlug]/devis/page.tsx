@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, FileText, Download } from 'lucide-react'
 import Sidebar from '@/components/dashboard/Sidebar'
+import BottomNav from '@/components/dashboard/BottomNav'
 
 interface DevisRow {
   id: string
@@ -33,9 +34,7 @@ export default function DevisHistoryPage() {
         .eq('client_slug', clientSlug)
         .order('created_at', { ascending: false })
 
-      if (!error && data) {
-        setDevisList(data)
-      }
+      if (!error && data) setDevisList(data)
       setLoading(false)
     }
     fetchDevis()
@@ -54,95 +53,118 @@ export default function DevisHistoryPage() {
     new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
   return (
-    <div
-      className="flex h-screen overflow-hidden"
-      style={{ backgroundColor: '#0F0F0F', fontFamily: 'var(--font-space-grotesk)' }}
-    >
-      <Sidebar clientSlug={clientSlug} logoSrc="/rosa_logo.png" />
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#0F0F0F', fontFamily: 'var(--font-space-grotesk)' }}>
+
+      {/* Sidebar desktop */}
+      <div className="hidden lg:block">
+        <Sidebar clientSlug={clientSlug} />
+      </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Header */}
-      <div
-        className="flex items-center gap-4 px-8 py-5 border-b flex-shrink-0"
-        style={{ backgroundColor: '#0A0A0A', borderColor: '#1a1a1a' }}
-      >
-        <button
-          onClick={() => router.push(`/${clientSlug}/dashboard`)}
-          className="text-zinc-400 hover:text-white transition-colors"
+        {/* Header */}
+        <div
+          className="flex items-center gap-3 px-4 lg:px-8 py-4 border-b flex-shrink-0"
+          style={{ backgroundColor: '#0A0A0A', borderColor: '#1a1a1a', paddingTop: 'max(16px, env(safe-area-inset-top))' }}
         >
-          <ArrowLeft size={20} />
-        </button>
-        <div className="flex items-center gap-2">
-          <FileText size={20} style={{ color: '#C4607A' }} />
-          <h1 className="text-white font-bold text-lg">Historique des devis</h1>
+          <button
+            onClick={() => router.push(`/${clientSlug}/dashboard`)}
+            className="text-zinc-400 hover:text-white p-1 -ml-1 min-h-[44px] flex items-center"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div className="flex items-center gap-2">
+            <FileText size={18} style={{ color: '#C4607A' }} />
+            <h1 className="text-white font-bold text-base lg:text-lg">Historique des devis</h1>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto flex-1 px-4 lg:px-8 py-4 lg:py-8 pb-20 lg:pb-8">
+          {loading ? (
+            <p className="text-zinc-500 text-sm">Chargement...</p>
+          ) : devisList.length === 0 ? (
+            <div className="text-center py-16">
+              <FileText size={40} className="mx-auto mb-4" style={{ color: '#333' }} />
+              <p className="text-zinc-500">Aucun devis généré pour l&apos;instant.</p>
+            </div>
+          ) : (
+            <>
+              {/* Mobile: stacked cards */}
+              <div className="space-y-3 lg:hidden">
+                {devisList.map((row) => (
+                  <div key={row.id} className="rounded-xl p-4" style={{ backgroundColor: '#111', border: '1px solid #1a1a1a' }}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-white font-semibold text-sm">{row.client_name}</p>
+                        {row.client_address && (
+                          <p className="text-zinc-500 text-xs mt-0.5 truncate">{row.client_address}</p>
+                        )}
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-zinc-500 text-xs font-mono">{row.devis_number}</span>
+                          <span className="text-zinc-500 text-xs">{fmtDate(row.created_at)}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                        <span className="font-bold text-sm" style={{ color: '#C4607A' }}>{fmt(row.total_ttc)}</span>
+                        <button
+                          onClick={() => downloadPDF(row)}
+                          disabled={!row.pdf_data}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-white disabled:opacity-30 min-h-[44px]"
+                          style={{ backgroundColor: '#1a1a1a' }}
+                        >
+                          <Download size={13} />
+                          PDF
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden lg:block rounded-2xl overflow-hidden border max-w-5xl" style={{ borderColor: '#1a1a1a' }}>
+                <div
+                  className="grid text-xs uppercase tracking-wider font-semibold px-5 py-3"
+                  style={{ backgroundColor: '#161616', color: '#555', gridTemplateColumns: '140px 1fr 110px 120px 48px' }}
+                >
+                  <span>N° Devis</span>
+                  <span>Client</span>
+                  <span>Date</span>
+                  <span className="text-right">Total TTC</span>
+                  <span />
+                </div>
+                {devisList.map((row, i) => (
+                  <div
+                    key={row.id}
+                    className="grid items-center px-5 py-4 border-t"
+                    style={{ gridTemplateColumns: '140px 1fr 110px 120px 48px', borderColor: '#1a1a1a', backgroundColor: i % 2 === 0 ? '#111' : '#0F0F0F' }}
+                  >
+                    <span className="text-zinc-300 text-sm font-mono">{row.devis_number}</span>
+                    <div>
+                      <p className="text-white text-sm font-medium">{row.client_name}</p>
+                      {row.client_address && (
+                        <p className="text-zinc-500 text-xs mt-0.5 truncate max-w-xs">{row.client_address}</p>
+                      )}
+                    </div>
+                    <span className="text-zinc-400 text-sm">{fmtDate(row.created_at)}</span>
+                    <span className="text-right font-bold" style={{ color: '#C4607A' }}>{fmt(row.total_ttc)}</span>
+                    <button
+                      onClick={() => downloadPDF(row)}
+                      disabled={!row.pdf_data}
+                      className="flex items-center justify-center w-9 h-9 rounded-lg disabled:opacity-30"
+                      style={{ backgroundColor: '#1a1a1a' }}
+                      title="Télécharger"
+                    >
+                      <Download size={15} className="text-zinc-300" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      <div className="px-8 py-8 max-w-5xl mx-auto overflow-y-auto flex-1 w-full">
-        {loading ? (
-          <p className="text-zinc-500 text-sm">Chargement...</p>
-        ) : devisList.length === 0 ? (
-          <div className="text-center py-20">
-            <FileText size={40} className="mx-auto mb-4" style={{ color: '#333' }} />
-            <p className="text-zinc-500">Aucun devis généré pour l&apos;instant.</p>
-          </div>
-        ) : (
-          <div
-            className="rounded-2xl overflow-hidden border"
-            style={{ borderColor: '#1a1a1a' }}
-          >
-            {/* Table header */}
-            <div
-              className="grid text-xs uppercase tracking-wider font-semibold px-5 py-3"
-              style={{
-                backgroundColor: '#161616',
-                color: '#555',
-                gridTemplateColumns: '140px 1fr 110px 120px 48px',
-              }}
-            >
-              <span>N° Devis</span>
-              <span>Client</span>
-              <span>Date</span>
-              <span className="text-right">Total TTC</span>
-              <span />
-            </div>
-
-            {devisList.map((row, i) => (
-              <div
-                key={row.id}
-                className="grid items-center px-5 py-4 border-t"
-                style={{
-                  gridTemplateColumns: '140px 1fr 110px 120px 48px',
-                  borderColor: '#1a1a1a',
-                  backgroundColor: i % 2 === 0 ? '#111' : '#0F0F0F',
-                }}
-              >
-                <span className="text-zinc-300 text-sm font-mono">{row.devis_number}</span>
-                <div>
-                  <p className="text-white text-sm font-medium">{row.client_name}</p>
-                  {row.client_address && (
-                    <p className="text-zinc-500 text-xs mt-0.5 truncate max-w-xs">{row.client_address}</p>
-                  )}
-                </div>
-                <span className="text-zinc-400 text-sm">{fmtDate(row.created_at)}</span>
-                <span className="text-right font-bold" style={{ color: '#C4607A' }}>
-                  {fmt(row.total_ttc)}
-                </span>
-                <button
-                  onClick={() => downloadPDF(row)}
-                  disabled={!row.pdf_data}
-                  className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors disabled:opacity-30"
-                  style={{ backgroundColor: '#1a1a1a' }}
-                  title="Télécharger le PDF"
-                >
-                  <Download size={15} className="text-zinc-300" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      </div>
+      <BottomNav clientSlug={clientSlug} />
     </div>
   )
 }

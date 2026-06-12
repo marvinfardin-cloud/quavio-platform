@@ -24,4 +24,18 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Prevent zoom on input focus (iOS) */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+  font-size: 16px !important;
 }

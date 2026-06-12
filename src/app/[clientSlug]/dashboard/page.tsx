@@ -6,6 +6,7 @@ import { getClientConfig } from '@/lib/clients'
 import { AGENTS } from '@/types'
 import SetupBanner from '@/components/dashboard/SetupBanner'
 import Sidebar from '@/components/dashboard/Sidebar'
+import BottomNav from '@/components/dashboard/BottomNav'
 
 const AGENT_CARD_COLORS: Record<string, string> = {
   isaac: '#C4607A',
@@ -33,14 +34,16 @@ export default async function DashboardPage({
   return (
     <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#0F0F0F', fontFamily: 'var(--font-space-grotesk)' }}>
 
-      {/* ── Sidebar ─────────────────────────────────────────── */}
-      <Sidebar clientSlug={clientSlug} logoSrc="/rosa_logo.png" />
+      {/* ── Sidebar (desktop only) ─────────────────────────────── */}
+      <div className="hidden lg:block">
+        <Sidebar clientSlug={clientSlug} />
+      </div>
 
       {/* ── Main ────────────────────────────────────────────── */}
-      <main className="flex-1 flex flex-col overflow-y-auto px-10 py-10">
+      <main className="flex-1 flex flex-col overflow-y-auto px-4 py-6 lg:px-10 lg:py-10 pb-20 lg:pb-10">
 
         {/* Greeting */}
-        <h1 className="text-center text-3xl font-bold text-white mb-6 tracking-tight">
+        <h1 className="text-center text-2xl lg:text-3xl font-bold text-white mb-4 lg:mb-6 tracking-tight">
           Bonjour, Rosa
         </h1>
 
@@ -48,7 +51,7 @@ export default async function DashboardPage({
         <SetupBanner clientSlug={clientSlug} />
 
         {/* Agent cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5 max-w-3xl mx-auto w-full">
           {enabledAgents.map((agent) => {
             const cardColor = AGENT_CARD_COLORS[agent.id] ?? client.primaryColor
             const photo = AGENT_PHOTOS[agent.id]
@@ -58,10 +61,10 @@ export default async function DashboardPage({
                 key={agent.id}
                 href={`/${clientSlug}/agents/${agent.id}`}
                 className="relative overflow-hidden rounded-2xl flex flex-col cursor-pointer group"
-                style={{ height: '360px', backgroundColor: cardColor }}
+                style={{ backgroundColor: cardColor }}
               >
-                {/* Photo — top 70% */}
-                <div className="relative w-full" style={{ height: '270px' }}>
+                {/* Photo */}
+                <div className="relative w-full" style={{ height: 'clamp(160px, 40vw, 270px)' }}>
                   {photo ? (
                     <Image
                       src={photo}
@@ -73,20 +76,19 @@ export default async function DashboardPage({
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <span className="text-white font-bold" style={{ fontSize: '80px', opacity: 0.3 }}>
+                      <span className="text-white font-bold" style={{ fontSize: '64px', opacity: 0.3 }}>
                         {agent.name.charAt(0)}
                       </span>
                     </div>
                   )}
                 </div>
 
-                {/* Bottom 30% — name + role */}
-                <div className="flex flex-col justify-center px-5 flex-1">
-                  <p className="text-white font-bold text-base leading-tight">{agent.name}</p>
-                  <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>{agent.role}</p>
+                {/* Name + role */}
+                <div className="flex flex-col justify-center px-4 py-3 lg:px-5 lg:flex-1">
+                  <p className="text-white font-bold text-sm lg:text-base leading-tight">{agent.name}</p>
+                  <p className="text-xs lg:text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>{agent.role}</p>
                 </div>
 
-                {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity rounded-2xl" />
               </Link>
             )
@@ -96,19 +98,22 @@ export default async function DashboardPage({
           <Link
             href={`/${clientSlug}/devis`}
             className="relative overflow-hidden rounded-2xl flex flex-col cursor-pointer group"
-            style={{ height: '360px', backgroundColor: '#1a1a1a' }}
+            style={{ backgroundColor: '#1a1a1a' }}
           >
-            <div className="w-full flex items-center justify-center" style={{ height: '270px' }}>
-              <FileText size={80} style={{ color: '#C4607A', opacity: 0.6 }} />
+            <div className="w-full flex items-center justify-center" style={{ height: 'clamp(160px, 40vw, 270px)' }}>
+              <FileText style={{ color: '#C4607A', opacity: 0.6, width: 'clamp(48px, 12vw, 80px)', height: 'clamp(48px, 12vw, 80px)' }} />
             </div>
-            <div className="flex flex-col justify-center px-5 flex-1">
-              <p className="text-white font-bold text-base leading-tight">Historique Devis</p>
-              <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>Retrouvez tous vos devis générés</p>
+            <div className="flex flex-col justify-center px-4 py-3 lg:px-5">
+              <p className="text-white font-bold text-sm lg:text-base leading-tight">Historique Devis</p>
+              <p className="text-xs lg:text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>Retrouvez tous vos devis générés</p>
             </div>
             <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-5 transition-opacity rounded-2xl" />
           </Link>
         </div>
       </main>
+
+      {/* ── Bottom Nav (mobile only) ─────────────────────────── */}
+      <BottomNav clientSlug={clientSlug} />
     </div>
   )
 }
