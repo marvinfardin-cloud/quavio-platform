@@ -1,13 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 
 export default function LoginPage() {
   const { clientSlug } = useParams<{ clientSlug: string }>()
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -25,8 +24,8 @@ export default function LoginPage() {
       return
     }
 
-    router.push(`/${clientSlug}/dashboard`)
-    router.refresh()
+    // Hard redirect so the server picks up the new session cookie
+    window.location.href = `/${clientSlug}/dashboard`
   }
 
   return (
