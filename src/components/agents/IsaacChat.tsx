@@ -8,6 +8,7 @@ import ChatMessage from '@/components/chat/ChatMessage'
 import DevisPreview from '@/components/agents/DevisPreview'
 import toast from 'react-hot-toast'
 import { ArrowLeft, Send, FileText, X } from 'lucide-react'
+import VoiceMicButton from '@/components/chat/VoiceMicButton'
 
 const ISAAC_PHOTO = '/agents/ISAAC.JPEG'
 
@@ -39,6 +40,30 @@ export default function IsaacChat({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  async function sendWithText(text: string) {
+    if (!text.trim() || loading) return
+    setInput('')
+    setLoading(true)
+    const userMessage: Message = { role: 'user', content: text.trim(), timestamp: new Date().toISOString() }
+    const updatedMessages = [...messages, userMessage]
+    setMessages(updatedMessages)
+    try {
+      const res = await fetch('/api/agents/isaac', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: updatedMessages.filter((m) => m.role !== 'assistant' || m !== WELCOME_MESSAGE).map((m) => ({ role: m.role, content: m.content })),
+          clientSlug: client.slug,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.message, timestamp: new Date().toISOString() }])
+      if (data.devis) { setCurrentDevis(data.devis); setShowDevis(true); toast.success('Devis généré !') }
+    } catch { toast.error('Erreur de connexion. Réessayez.') }
+    finally { setLoading(false) }
+  }
 
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault()
@@ -162,6 +187,11 @@ export default function IsaacChat({
                 placeholder="Décrivez le chantier..."
                 className="flex-1 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 transition-colors min-h-[48px]"
                 style={{ fontSize: '16px' }}
+                disabled={loading}
+              />
+              <VoiceMicButton
+                onTranscript={setInput}
+                onAutoSend={sendWithText}
                 disabled={loading}
               />
               <button

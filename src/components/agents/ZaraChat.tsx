@@ -7,6 +7,7 @@ import { ClientConfig, Message } from '@/types'
 import ChatMessage from '@/components/chat/ChatMessage'
 import toast from 'react-hot-toast'
 import { ArrowLeft, Send, Copy, Check, FileDown } from 'lucide-react'
+import VoiceMicButton from '@/components/chat/VoiceMicButton'
 
 const ZARA_PHOTO = '/agents/ZARA.JPEG'
 
@@ -95,6 +96,23 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  async function sendWithText(text: string) {
+    if (!text.trim() || loading) return
+    setInput('')
+    setLoading(true)
+    const userMsg: ExtendedMessage = { role: 'user', content: text.trim(), timestamp: new Date().toISOString() }
+    const updated = [...messages, userMsg]
+    setMessages(updated)
+    try {
+      const apiMessages = updated.filter((m, i) => !(i === 0 && m.role === 'assistant')).map((m) => ({ role: m.role, content: m.content }))
+      const res = await fetch('/api/agents/zara', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, clientSlug: client.slug }) })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.message, timestamp: new Date().toISOString(), isDocument: data.isDocument ?? false }])
+    } catch { toast.error('Erreur de connexion. Réessayez.') }
+    finally { setLoading(false) }
+  }
 
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault()
@@ -230,6 +248,11 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
             rows={2}
             className="flex-1 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 transition-colors resize-none min-h-[48px]"
             style={{ fontSize: '16px' }}
+            disabled={loading}
+          />
+          <VoiceMicButton
+            onTranscript={setInput}
+            onAutoSend={sendWithText}
             disabled={loading}
           />
           <button
