@@ -38,50 +38,50 @@ async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: str
 
   // ── Header band ──────────────────────────────────────────────
   doc.setFillColor(pr, pg, pb)
-  doc.rect(0, 0, 210, 50, 'F')
+  doc.rect(0, 0, 210, 60, 'F')
 
   if (logoDataUrl) {
-    doc.addImage(logoDataUrl, 'PNG', 15, 8, 35, 35)
+    doc.addImage(logoDataUrl, 'PNG', 8, 5, 50, 50)
   }
 
-  const textX = logoDataUrl ? 55 : 14
+  const textX = logoDataUrl ? 63 : 14
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(16)
-  doc.text('Rosa Excavator — Rental and Service', textX, 16)
+  doc.text('Rosa Aménagement', textX, 20)
 
   doc.setFont('helvetica', 'italic')
   doc.setFontSize(7.5)
-  doc.text("Avec ROSA, chaque projet est guidé par la passion de l'embellissement extérieur", textX, 24)
+  doc.text("Avec ROSA, chaque projet est guidé par la passion de l'embellissement extérieur", textX, 29)
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
-  doc.text('533 Chemin Savane Dédé, 97232 Le Lamentin', textX, 32)
-  doc.text('Tél : +596 696 34 31 21   |   contact@rosaexcavator.com', textX, 39)
+  doc.text('533 Chemin Savane Dédé, 97232 Le Lamentin', textX, 38)
+  doc.text('Tél : +596 696 34 31 21   |   contact@rosaamenagement.com', textX, 46)
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
-  doc.text(`Devis N° ${devisNum}`, 196, 18, { align: 'right' })
+  doc.text(`Devis N° ${devisNum}`, 196, 22, { align: 'right' })
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
-  doc.text(`Date : ${date}`, 196, 26, { align: 'right' })
+  doc.text(`Date : ${date}`, 196, 31, { align: 'right' })
 
   // ── Client block ─────────────────────────────────────────────
   doc.setTextColor(0, 0, 0)
   doc.setFillColor(248, 248, 248)
-  doc.rect(120, 57, 76, 28, 'F')
+  doc.rect(120, 67, 76, 28, 'F')
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9)
-  doc.text('CLIENT', 124, 65)
+  doc.text('CLIENT', 124, 75)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
-  doc.text(devis.clientName, 124, 72)
+  doc.text(devis.clientName, 124, 82)
   if (devis.clientAddress) {
-    doc.text(doc.splitTextToSize(devis.clientAddress, 68), 124, 79)
+    doc.text(doc.splitTextToSize(devis.clientAddress, 68), 124, 89)
   }
 
   // ── Table ────────────────────────────────────────────────────
-  const tableTop = 95
+  const tableTop = 105
   const cols = { desc: 14, qty: 112, unit: 130, pu: 150, total: 175 }
 
   doc.setFillColor(pr, pg, pb)

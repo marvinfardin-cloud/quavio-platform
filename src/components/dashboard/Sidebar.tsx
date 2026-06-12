@@ -43,7 +43,7 @@ export default function Sidebar({ clientSlug, logoSrc }: SidebarProps) {
       {/* Logo */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={logoSrc}
+        src={`${logoSrc}?v=2`}
         alt="Logo"
         width={36}
         height={36}
