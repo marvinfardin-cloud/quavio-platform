@@ -15,6 +15,16 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
+    console.log('SUPABASE URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('ANON KEY LENGTH:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length)
+    console.log('ANON KEY START:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 20))
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      toast.error('Configuration Supabase manquante. Vérifiez les variables d\'environnement.')
+      setLoading(false)
+      return
+    }
+
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
 
