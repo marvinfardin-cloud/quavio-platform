@@ -2,10 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ClientConfig, Message } from '@/types'
 import ChatMessage from '@/components/chat/ChatMessage'
 import toast from 'react-hot-toast'
 import { ArrowLeft, Send, Copy, Check } from 'lucide-react'
+
+const ZARA_PHOTO = '/agents/ZARA.JPEG'
 
 const WELCOME_MESSAGE: Message = {
   role: 'assistant',
@@ -95,8 +98,8 @@ export default function ZaraChat({
         >
           <ArrowLeft size={20} />
         </Link>
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm bg-indigo-500">
-          Z
+        <div className="w-9 h-9 rounded-full overflow-hidden relative flex-shrink-0">
+          <Image src={ZARA_PHOTO} alt="Zara" fill className="object-cover object-top" />
         </div>
         <div>
           <h1 className="text-white font-semibold">Zara</h1>
@@ -111,6 +114,7 @@ export default function ZaraChat({
               message={msg}
               primaryColor="#6366f1"
               agentName="Zara"
+              agentPhoto={ZARA_PHOTO}
             />
             {msg.role === 'assistant' && i > 0 && (
               <button
@@ -125,8 +129,8 @@ export default function ZaraChat({
         ))}
         {loading && (
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 bg-indigo-500">
-              Z
+            <div className="w-8 h-8 rounded-full overflow-hidden relative flex-shrink-0">
+              <Image src={ZARA_PHOTO} alt="Zara" fill className="object-cover object-top" />
             </div>
             <div className="bg-zinc-800 rounded-2xl rounded-tl-sm px-4 py-3">
               <div className="flex gap-1">

@@ -2,11 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ClientConfig, Message, DevisData } from '@/types'
 import ChatMessage from '@/components/chat/ChatMessage'
 import DevisPreview from '@/components/agents/DevisPreview'
 import toast from 'react-hot-toast'
 import { ArrowLeft, Send, FileText } from 'lucide-react'
+
+const ISAAC_PHOTO = '/agents/ISAAC.JPEG'
 
 const WELCOME_MESSAGE: Message = {
   role: 'assistant',
@@ -97,11 +100,8 @@ export default function IsaacChat({
         >
           <ArrowLeft size={20} />
         </Link>
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm"
-          style={{ backgroundColor: client.primaryColor }}
-        >
-          I
+        <div className="w-9 h-9 rounded-full overflow-hidden relative flex-shrink-0">
+          <Image src={ISAAC_PHOTO} alt="Isaac" fill className="object-cover object-top" />
         </div>
         <div>
           <h1 className="text-white font-semibold">Isaac</h1>
@@ -119,15 +119,13 @@ export default function IsaacChat({
                   message={msg}
                   primaryColor={client.primaryColor}
                   agentName="Isaac"
+                  agentPhoto={ISAAC_PHOTO}
                 />
               ))}
               {loading && (
                 <div className="flex gap-3">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    style={{ backgroundColor: client.primaryColor }}
-                  >
-                    I
+                  <div className="w-8 h-8 rounded-full overflow-hidden relative flex-shrink-0">
+                    <Image src={ISAAC_PHOTO} alt="Isaac" fill className="object-cover object-top" />
                   </div>
                   <div className="bg-zinc-800 rounded-2xl rounded-tl-sm px-4 py-3">
                     <div className="flex gap-1">
