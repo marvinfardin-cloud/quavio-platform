@@ -63,7 +63,7 @@ export default async function DashboardPage({
 
         {/* Greeting */}
         <h1 className="text-center text-3xl font-bold text-white mb-6 tracking-tight">
-          Bonjour, Rosa 👋
+          Bonjour, Rosa
         </h1>
 
         {/* Search bar */}
@@ -90,16 +90,16 @@ export default async function DashboardPage({
                 key={agent.id}
                 href={`/${clientSlug}/agents/${agent.id}`}
                 className="relative overflow-hidden rounded-2xl flex flex-col cursor-pointer group"
-                style={{ height: '280px', backgroundColor: cardColor }}
+                style={{ height: '320px', backgroundColor: cardColor }}
               >
                 {/* Photo — top 70% */}
-                <div className="relative w-full" style={{ height: '196px' }}>
+                <div className="relative w-full" style={{ height: '230px' }}>
                   {photo ? (
                     <Image
                       src={photo}
                       alt={agent.name}
                       fill
-                      className="object-cover object-top"
+                      className="object-cover object-center"
                       sizes="(max-width: 768px) 100vw, 50vw"
                     />
                   ) : (
