@@ -1,20 +1,18 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { redirect } from 'next/navigation'
+import { Home, Bot, Settings } from 'lucide-react'
 import { getClientConfig } from '@/lib/clients'
 import { AGENTS } from '@/types'
 
-function getTodayFR() {
-  return new Date().toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+const AGENT_CARD_COLORS: Record<string, string> = {
+  isaac: '#E85D26',
+  zara: '#7C3AED',
 }
 
-const AGENT_AVATAR_COLORS: Record<string, string> = {
-  isaac: '#E85D26',
-  zara: '#6366f1',
+const AGENT_PHOTOS: Record<string, string> = {
+  isaac: '/agents/ISAAC.JPEG',
+  zara: '/agents/ZARA.JPEG',
 }
 
 export default async function DashboardPage({
@@ -31,68 +29,97 @@ export default async function DashboardPage({
     .filter(Boolean)
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: client.backgroundColor }}>
-      {/* Header */}
-      <header className="border-b border-zinc-800 px-8 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#0F0F0F', fontFamily: 'var(--font-space-grotesk)' }}>
+
+      {/* ── Sidebar ─────────────────────────────────────────── */}
+      <aside
+        className="flex flex-col items-center py-6 gap-8 flex-shrink-0"
+        style={{ width: '60px', backgroundColor: '#0A0A0A', borderRight: '1px solid #1a1a1a' }}
+      >
+        {/* Logo */}
+        <div
+          className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+          style={{ backgroundColor: client.primaryColor }}
+        >
+          {client.name.charAt(0)}
+        </div>
+
+        {/* Nav icons */}
+        <nav className="flex flex-col items-center gap-6 mt-2">
+          <button className="text-white opacity-90 hover:opacity-100 transition-opacity" title="Accueil">
+            <Home size={20} />
+          </button>
+          <button className="text-zinc-500 hover:text-white transition-colors" title="Agents">
+            <Bot size={20} />
+          </button>
+          <button className="text-zinc-500 hover:text-white transition-colors" title="Paramètres">
+            <Settings size={20} />
+          </button>
+        </nav>
+      </aside>
+
+      {/* ── Main ────────────────────────────────────────────── */}
+      <main className="flex-1 flex flex-col overflow-y-auto px-10 py-10">
+
+        {/* Greeting */}
+        <h1 className="text-center text-3xl font-bold text-white mb-6 tracking-tight">
+          Bonjour, Rosa 👋
+        </h1>
+
+        {/* Search bar */}
+        <div className="max-w-xl mx-auto w-full mb-10">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base flex-shrink-0"
-            style={{ backgroundColor: client.primaryColor }}
+            className="flex items-center gap-3 px-5 py-3 rounded-2xl"
+            style={{ backgroundColor: '#1a1a1a' }}
           >
-            {client.name.charAt(0)}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <span style={{ color: '#555', fontSize: '14px' }}>Que recherchez-vous ?</span>
           </div>
-          <span className="text-white font-semibold text-lg tracking-tight">
-            {client.name}
-          </span>
         </div>
-        <div className="text-right">
-          <p className="text-zinc-400 text-sm capitalize">{getTodayFR()}</p>
-          <p className="text-white font-semibold text-sm mt-0.5">Bonjour Rosa</p>
-        </div>
-      </header>
 
-      {/* Agent cards */}
-      <main className="px-8 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        {/* Agent cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto w-full">
           {enabledAgents.map((agent) => {
-            const avatarColor = AGENT_AVATAR_COLORS[agent.id] ?? client.primaryColor
+            const cardColor = AGENT_CARD_COLORS[agent.id] ?? client.primaryColor
+            const photo = AGENT_PHOTOS[agent.id]
+
             return (
-              <div
+              <Link
                 key={agent.id}
-                className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden flex flex-col"
-                style={{ height: '280px' }}
+                href={`/${clientSlug}/agents/${agent.id}`}
+                className="relative overflow-hidden rounded-2xl flex flex-col cursor-pointer group"
+                style={{ height: '280px', backgroundColor: cardColor }}
               >
-                {/* Initials avatar */}
-                <div
-                  className="w-full flex-shrink-0 flex items-center justify-center"
-                  style={{ height: '160px', backgroundColor: avatarColor }}
-                >
-                  <span className="text-white font-bold" style={{ fontSize: '72px', lineHeight: 1 }}>
-                    {agent.name.charAt(0)}
-                  </span>
+                {/* Photo — top 70% */}
+                <div className="relative w-full" style={{ height: '196px' }}>
+                  {photo ? (
+                    <Image
+                      src={photo}
+                      alt={agent.name}
+                      fill
+                      className="object-cover object-top"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-white font-bold" style={{ fontSize: '80px', opacity: 0.3 }}>
+                        {agent.name.charAt(0)}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Content */}
-                <div className="flex flex-col flex-1 px-5 pt-4 pb-4">
-                  <div className="flex-1">
-                    <h2 className="text-white font-bold text-lg leading-tight">{agent.name}</h2>
-                    <p className="text-sm font-medium mt-0.5" style={{ color: avatarColor }}>
-                      {agent.role}
-                    </p>
-                    <p className="text-xs mt-1.5 leading-relaxed" style={{ color: '#999' }}>
-                      {agent.description}
-                    </p>
-                  </div>
-
-                  <Link
-                    href={`/${clientSlug}/agents/${agent.id}`}
-                    className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-lg text-white text-sm font-semibold transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: avatarColor }}
-                  >
-                    Lancer &rarr;
-                  </Link>
+                {/* Bottom 30% — name + role */}
+                <div className="flex flex-col justify-center px-5 flex-1">
+                  <p className="text-white font-bold text-base leading-tight">{agent.name}</p>
+                  <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>{agent.role}</p>
                 </div>
-              </div>
+
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity rounded-2xl" />
+              </Link>
             )
           })}
         </div>
