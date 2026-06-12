@@ -29,15 +29,27 @@ TVA applicable : 8.5% (taux Martinique).
 Calcule les totaux automatiquement.
 Réponds toujours en français. Sois concis et professionnel.`
 
+// Extract a euro amount from a line like "TOTAL HT: 1 500,00 €" or "TOTAL HT: 1500.00 €"
+function parseAmount(text: string, label: string): number {
+  // Match the label then capture everything up to optional € or end-of-line
+  const re = new RegExp(label + '[:\\s]+([\\d\\s.,]+)\\s*€?', 'i')
+  const m = text.match(re)
+  if (!m) return 0
+  // Strip thousand-separator spaces, normalise decimal comma → dot
+  const cleaned = m[1].replace(/\s/g, '').replace(',', '.')
+  return parseFloat(cleaned) || 0
+}
+
 function parseDevis(text: string) {
   if (!text.includes('CLIENT:') || !text.includes('TOTAL TTC:')) return null
 
   try {
     const clientMatch = text.match(/CLIENT:\s*(.+)/)
     const adresseMatch = text.match(/ADRESSE:\s*(.+)/)
-    const totalHTMatch = text.match(/TOTAL HT:\s*([\d.,]+)/)
-    const tvaMatch = text.match(/TVA 8\.5%:\s*([\d.,]+)/)
-    const totalTTCMatch = text.match(/TOTAL TTC:\s*([\d.,]+)/)
+
+    const totalHT  = parseAmount(text, 'TOTAL HT')
+    const tva      = parseAmount(text, 'TVA 8[.,]5%')
+    const totalTTC = parseAmount(text, 'TOTAL TTC')
 
     const servicesSection = text.match(/PRESTATIONS:\n([\s\S]*?)(?:\nTOTAL HT:)/)
     const services: Array<{ description: string; quantity: number; unit: string; unitPrice: number; total: number }> = []
@@ -51,7 +63,9 @@ function parseDevis(text: string) {
           const qtyUnit = parts[1].split(' ')
           const quantity = parseFloat(qtyUnit[0].replace(',', '.')) || 1
           const unit = qtyUnit.slice(1).join(' ') || 'u'
-          const unitPrice = parseFloat(parts[2].replace(/[^0-9.,]/g, '').replace(',', '.')) || 0
+          // unit price may be "1 500,00 €" — strip spaces, currency symbol
+          const rawPrice = parts[2].replace(/[^\d,. ]/g, '').replace(/\s/g, '').replace(',', '.')
+          const unitPrice = parseFloat(rawPrice) || 0
           const total = Math.round(quantity * unitPrice * 100) / 100
           services.push({ description, quantity, unit, unitPrice, total })
         }
@@ -60,16 +74,15 @@ function parseDevis(text: string) {
 
     if (!services.length) return null
 
-    const parse = (m: RegExpMatchArray | null) =>
-      parseFloat((m?.[1] ?? '0').replace(',', '.'))
+    console.log('[Isaac] parsed devis — totalHT:', totalHT, 'tva:', tva, 'totalTTC:', totalTTC)
 
     return {
       clientName: clientMatch?.[1]?.trim() ?? 'Client',
       clientAddress: adresseMatch?.[1]?.trim() ?? '',
       services,
-      totalHT: parse(totalHTMatch),
-      tva: parse(tvaMatch),
-      totalTTC: parse(totalTTCMatch),
+      totalHT,
+      tva,
+      totalTTC,
     }
   } catch {
     return null
