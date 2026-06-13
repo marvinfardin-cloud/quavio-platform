@@ -86,14 +86,20 @@ async function buildSystemPrompt(clientSlug: string): Promise<string> {
   }
 }
 
-function detectStructuredDoc(text: string): boolean {
+type DocType = 'planning' | 'courrier' | 'annonce' | 'document' | null
+
+function detectDocType(text: string): DocType {
   const upper = text.toUpperCase()
   const planningKeywords = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI', 'DIMANCHE']
-  const docKeywords = ['OBJET :', 'MADAME', 'MONSIEUR', 'CORDIALEMENT', 'COMPTE-RENDU', 'ANNONCE', 'POSTE :', 'PROFIL :']
   const hasPlanningDay = planningKeywords.filter(k => upper.includes(k)).length >= 2
-  const hasDocStructure = docKeywords.some(k => upper.includes(k))
+  if (hasPlanningDay) return 'planning'
+  const courrierKeywords = ['OBJET :', 'MADAME', 'MONSIEUR', 'CORDIALEMENT', 'COMPTE-RENDU', 'FAIT À', 'LE ']
+  if (courrierKeywords.filter(k => upper.includes(k)).length >= 2) return 'courrier'
+  const annonceKeywords = ['ANNONCE', 'POSTE :', 'PROFIL :', 'CANDIDATURE', 'REJOINDRE', 'RECRUTEMENT']
+  if (annonceKeywords.some(k => upper.includes(k))) return 'annonce'
   const lineCount = text.split('\n').length
-  return hasPlanningDay || hasDocStructure || lineCount >= 15
+  if (lineCount >= 15) return 'document'
+  return null
 }
 
 export async function POST(req: NextRequest) {
@@ -119,7 +125,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       message: content.text,
-      isDocument: detectStructuredDoc(content.text),
+      docType: detectDocType(content.text),
     })
   } catch (error) {
     console.error('Zara API error:', error)
