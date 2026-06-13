@@ -6,6 +6,7 @@ import { ClientConfig, Message } from '@/types'
 import ChatMessage from '@/components/chat/ChatMessage'
 import toast from 'react-hot-toast'
 import { ArrowLeft, Send, Copy, Check } from 'lucide-react'
+import WeeklyPlanningModal from './WeeklyPlanningModal'
 
 const WELCOME_MESSAGE: Message = {
   role: 'assistant',
@@ -27,6 +28,7 @@ export default function ZaraChat({
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  const [showPlanning, setShowPlanning] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -84,6 +86,10 @@ export default function ZaraChat({
   }
 
   return (
+    <>
+    {showPlanning && (
+      <WeeklyPlanningModal clientSlug={client.slug} onClose={() => setShowPlanning(false)} />
+    )}
     <div
       className="min-h-screen flex flex-col"
       style={{ backgroundColor: 'var(--bg, #0A0A0A)' }}
@@ -103,6 +109,17 @@ export default function ZaraChat({
           <p className="text-zinc-500 text-xs">Assistante Communication</p>
         </div>
       </header>
+
+      {/* Weekly planning button */}
+      <div className="px-4 pt-4 pb-2">
+        <button
+          onClick={() => setShowPlanning(true)}
+          className="w-full font-semibold text-white rounded-xl transition-opacity hover:opacity-90 active:opacity-80"
+          style={{ backgroundColor: '#C4607A', height: '48px' }}
+        >
+          Générer un planning
+        </button>
+      </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
         {messages.map((msg, i) => (
@@ -171,5 +188,6 @@ export default function ZaraChat({
         <p className="text-zinc-600 text-xs mt-2">Entrée pour envoyer · Maj+Entrée pour nouvelle ligne</p>
       </div>
     </div>
+    </>
   )
 }
