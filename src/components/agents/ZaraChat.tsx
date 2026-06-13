@@ -40,72 +40,81 @@ async function loadLogo(): Promise<string | null> {
   }
 }
 
-function addPdfHeader(doc: import('jspdf').jsPDF, logoDataUrl: string | null, landscape: boolean) {
-  const PRIMARY: [number, number, number] = [196, 96, 122]
+const DARK: [number, number, number] = [26, 26, 26]
+const DARK2: [number, number, number] = [45, 45, 45]
+
+function addPdfHeader(doc: import('jspdf').jsPDF, logoDataUrl: string | null, landscape: boolean, subtitle?: string) {
   const width = landscape ? 297 : 210
-  doc.setFillColor(...PRIMARY)
-  doc.rect(0, 0, width, 38, 'F')
+  doc.setFillColor(...DARK)
+  doc.rect(0, 0, width, 40, 'F')
   if (logoDataUrl) {
     doc.setFillColor(255, 255, 255)
-    doc.circle(20, 19, 11, 'F')
-    doc.addImage(logoDataUrl, 'PNG', 9, 8, 22, 22)
+    doc.circle(21, 20, 12, 'F')
+    doc.addImage(logoDataUrl, 'PNG', 9, 8, 24, 24)
   }
-  const tx = logoDataUrl ? 38 : 12
+  const tx = logoDataUrl ? 40 : 15
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
-  doc.text('Rosa Excavator — Rental and Service', tx, 17)
+  doc.text(subtitle ?? 'Rosa Excavator — Rental and Service', tx, 18)
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7.5)
-  doc.text(`Document généré par Zara  |  ${new Date().toLocaleDateString('fr-FR')}`, tx, 27)
+  doc.setFontSize(8)
+  doc.setTextColor(180, 180, 180)
+  doc.text(`Rosa Excavator  |  ${new Date().toLocaleDateString('fr-FR')}`, tx, 29)
 }
 
 function addPdfFooter(doc: import('jspdf').jsPDF, landscape: boolean) {
   const width = landscape ? 297 : 210
   const y = landscape ? 196 : 284
-  doc.setDrawColor(220, 220, 220)
-  doc.line(12, y - 4, width - 12, y - 4)
-  doc.setTextColor(153, 153, 153)
+  doc.setDrawColor(224, 224, 224)
+  doc.line(15, y - 2, width - 15, y - 2)
+  doc.setTextColor(160, 160, 160)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7)
-  doc.text('Rosa Excavator  |  +596 696 34 31 21  |  contact@rosaexcavator.com', width / 2, y + 2, { align: 'center' })
+  doc.text('Rosa Excavator  |  +596 696 34 31 21  |  contact@rosaexcavator.com', width / 2, y + 5, { align: 'center' })
 }
 
 async function exportPlanningPDF(text: string) {
   const { default: jsPDF } = await import('jspdf')
   const doc = new jsPDF({ orientation: 'landscape' })
   const logo = await loadLogo()
-  addPdfHeader(doc, logo, true)
+
+  // Extract week title from text if present
+  const weekMatch = text.match(/PLANNING\s+SEMAINE\s+DU\s+[^\n]+/i)
+  const subtitle = weekMatch ? weekMatch[0].trim() : 'PLANNING HEBDOMADAIRE'
+  addPdfHeader(doc, logo, true, subtitle)
 
   const DAYS = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI', 'DIMANCHE']
   const employees = ['MARCUS MATHURIN', 'NICKY ANTOINE', 'WILLIAM JOSEPH-JULIEN']
-  const PRIMARY: [number, number, number] = [196, 96, 122]
 
-  // Table layout
-  const tableLeft = 12
-  const tableTop = 46
-  const colWidths = [30, 82, 82, 82] // JOUR + 3 employees
-  const rowH = 18
-  const colStarts = [tableLeft, tableLeft + colWidths[0], tableLeft + colWidths[0] + colWidths[1], tableLeft + colWidths[0] + colWidths[1] + colWidths[2]]
+  const tableLeft = 15
+  const tableTop = 48
+  const colWidths = [32, 80, 80, 82]
+  const tableWidth = colWidths.reduce((a, b) => a + b, 0)
+  const rowH = 22
+  const colStarts = [
+    tableLeft,
+    tableLeft + colWidths[0],
+    tableLeft + colWidths[0] + colWidths[1],
+    tableLeft + colWidths[0] + colWidths[1] + colWidths[2],
+  ]
 
   // Header row
-  doc.setFillColor(...PRIMARY)
-  doc.rect(tableLeft, tableTop, colWidths.reduce((a, b) => a + b, 0), rowH, 'F')
+  doc.setFillColor(...DARK2)
+  doc.rect(tableLeft, tableTop, tableWidth, 10, 'F')
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8.5)
+  doc.setFontSize(8)
   const headers = ['JOUR', ...employees]
   headers.forEach((h, i) => {
-    doc.text(h, colStarts[i] + 3, tableTop + 12)
+    doc.text(h, colStarts[i] + 4, tableTop + 7)
   })
 
   // Parse lines into day buckets
   type DayData = { day: string; cells: string[] }
   const dayBuckets: DayData[] = []
   let current: DayData | null = null
-  const lines = text.split('\n')
-
-  for (const line of lines) {
+  for (const line of text.split('\n')) {
     const upper = line.trim().toUpperCase()
     const foundDay = DAYS.find(d => upper.startsWith(d))
     if (foundDay) {
@@ -116,45 +125,48 @@ async function exportPlanningPDF(text: string) {
       if (empIdx >= 0) {
         const colonIdx = line.indexOf(':')
         const val = colonIdx >= 0 ? line.slice(colonIdx + 1).trim() : line.trim()
-        current.cells[empIdx] = val
+        current.cells[empIdx] = (current.cells[empIdx] ? current.cells[empIdx] + ' ' : '') + val
       }
     }
   }
   if (current) dayBuckets.push(current)
 
-  let y = tableTop + rowH
-  dayBuckets.forEach((row, i) => {
-    const bg: [number, number, number] = i % 2 === 0 ? [255, 255, 255] : [253, 242, 244]
-    doc.setFillColor(...bg)
-    doc.rect(tableLeft, y, colWidths.reduce((a, b) => a + b, 0), rowH, 'F')
-    doc.setDrawColor(230, 230, 230)
-    doc.rect(tableLeft, y, colWidths.reduce((a, b) => a + b, 0), rowH, 'S')
+  let y = tableTop + 10
+  if (dayBuckets.length > 0) {
+    dayBuckets.forEach((row, i) => {
+      const bg: [number, number, number] = i % 2 === 0 ? [255, 255, 255] : [248, 248, 248]
+      doc.setFillColor(...bg)
+      doc.rect(tableLeft, y, tableWidth, rowH, 'F')
+      doc.setDrawColor(224, 224, 224)
+      doc.rect(tableLeft, y, tableWidth, rowH, 'S')
 
-    doc.setTextColor(0, 0, 0)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8)
-    doc.text(row.day.substring(0, 18), colStarts[0] + 3, y + 11)
+      // Day cell — bold dark
+      doc.setTextColor(51, 51, 51)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(8.5)
+      doc.text(row.day.substring(0, 20), colStarts[0] + 4, y + 9)
 
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(7.5)
-    row.cells.forEach((cell, ci) => {
-      const wrapped = doc.splitTextToSize(cell, colWidths[ci + 1] - 6)
-      doc.text(wrapped[0] ?? '', colStarts[ci + 1] + 3, y + 8)
-      if (wrapped[1]) doc.text(wrapped[1], colStarts[ci + 1] + 3, y + 14)
+      // Employee cells
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.setTextColor(26, 26, 26)
+      row.cells.forEach((cell, ci) => {
+        const wrapped = doc.splitTextToSize(cell, colWidths[ci + 1] - 8)
+        doc.text(wrapped[0] ?? '', colStarts[ci + 1] + 4, y + 8)
+        if (wrapped[1]) doc.text(wrapped[1], colStarts[ci + 1] + 4, y + 15)
+      })
+      y += rowH
     })
-    y += rowH
-  })
-
-  // If no parsed days, fall back to plain text
-  if (dayBuckets.length === 0) {
-    doc.setTextColor(0, 0, 0)
+  } else {
+    // Fallback plain text
+    doc.setTextColor(26, 26, 26)
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(9)
     const wrapped = doc.splitTextToSize(text, 270)
-    let ty = tableTop + 8
+    let ty = tableTop + 14
     for (const l of wrapped) {
       if (ty > 185) { doc.addPage(); ty = 20 }
-      doc.text(l, 12, ty)
+      doc.text(l, tableLeft, ty)
       ty += 5.5
     }
   }
@@ -169,15 +181,15 @@ async function exportCourrierPDF(text: string) {
   const logo = await loadLogo()
   addPdfHeader(doc, logo, false)
 
-  doc.setTextColor(0, 0, 0)
+  doc.setTextColor(26, 26, 26)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
-  const lines = doc.splitTextToSize(text, 176)
-  let y = 50
+  const lines = doc.splitTextToSize(text, 180)
+  let y = 52
   for (const line of lines) {
     if (y > 275) { doc.addPage(); y = 20 }
-    doc.text(line, 17, y)
-    y += 6
+    doc.text(line, 15, y)
+    y += 6.5
   }
 
   addPdfFooter(doc, false)
@@ -190,14 +202,14 @@ async function exportGenericPDF(text: string) {
   const logo = await loadLogo()
   addPdfHeader(doc, logo, false)
 
-  doc.setTextColor(0, 0, 0)
+  doc.setTextColor(26, 26, 26)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9.5)
-  const lines = doc.splitTextToSize(text, 176)
-  let y = 50
+  const lines = doc.splitTextToSize(text, 180)
+  let y = 52
   for (const line of lines) {
     if (y > 275) { doc.addPage(); y = 20 }
-    doc.text(line, 17, y)
+    doc.text(line, 15, y)
     y += 5.5
   }
 
