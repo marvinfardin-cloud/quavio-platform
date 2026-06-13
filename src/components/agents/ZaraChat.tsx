@@ -5,8 +5,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ClientConfig, Message } from '@/types'
 import ChatMessage from '@/components/chat/ChatMessage'
+import PlanningModal from '@/components/agents/PlanningModal'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Send, Copy, Check, FileDown, Mail } from 'lucide-react'
+import { ArrowLeft, Send, Copy, Check, FileDown, Mail, CalendarDays } from 'lucide-react'
 import VoiceMicButton from '@/components/chat/VoiceMicButton'
 
 const ZARA_PHOTO = '/agents/ZARA.JPEG'
@@ -241,6 +242,7 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  const [showPlanning, setShowPlanning] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -313,6 +315,16 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
     setTimeout(() => setCopiedIndex(null), 2000)
   }
 
+  function onPlanningCreated(summary: string) {
+    setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: summary,
+      timestamp: new Date().toISOString(),
+      docType: 'planning',
+    }])
+    toast.success('Planning ajouté au chat !')
+  }
+
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: '#0A0A0A' }}>
       <header className="flex-shrink-0 border-b border-zinc-800 px-4 py-3 flex items-center gap-3"
@@ -323,10 +335,18 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
         <div className="w-8 h-8 rounded-full overflow-hidden relative flex-shrink-0">
           <Image src={ZARA_PHOTO} alt="Zara" fill className="object-cover object-top" />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className="text-white font-semibold text-sm leading-tight">Zara — Assistante Personnelle</h1>
           <p className="text-zinc-500 text-xs">Planning, communications, documents...</p>
         </div>
+        <button
+          onClick={() => setShowPlanning(true)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-xs font-semibold shrink-0 min-h-[44px] hover:opacity-90 transition-opacity"
+          style={{ backgroundColor: '#C4607A' }}
+        >
+          <CalendarDays size={14} />
+          <span className="hidden sm:inline">Planning</span>
+        </button>
       </header>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
@@ -423,6 +443,14 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
         </form>
         <p className="hidden sm:block text-zinc-600 text-xs mt-2">Entrée pour envoyer · Maj+Entrée pour nouvelle ligne</p>
       </div>
+
+      {showPlanning && (
+        <PlanningModal
+          clientSlug={client.slug}
+          onClose={() => setShowPlanning(false)}
+          onPlanningCreated={onPlanningCreated}
+        />
+      )}
     </div>
   )
 }
