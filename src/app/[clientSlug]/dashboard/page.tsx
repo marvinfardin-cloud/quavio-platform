@@ -1,9 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { getClientConfig } from '@/lib/clients'
 import { AGENTS } from '@/types'
-import LogoutButton from '@/components/LogoutButton'
 
 export default async function DashboardPage({
   params,
@@ -11,14 +9,6 @@ export default async function DashboardPage({
   params: Promise<{ clientSlug: string }>
 }) {
   const { clientSlug } = await params
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect(`/${clientSlug}/login`)
-
   const client = await getClientConfig(clientSlug)
   if (!client) redirect('/')
 
@@ -31,7 +21,7 @@ export default async function DashboardPage({
       className="min-h-screen"
       style={{ backgroundColor: 'var(--bg, #0A0A0A)' }}
     >
-      <header className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-zinc-800 px-6 py-4 flex items-center">
         <div className="flex items-center gap-3">
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm"
@@ -40,10 +30,6 @@ export default async function DashboardPage({
             {client.name.charAt(0)}
           </div>
           <span className="text-white font-semibold">{client.name}</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-zinc-400 text-sm">{user.email}</span>
-          <LogoutButton clientSlug={clientSlug} />
         </div>
       </header>
 
