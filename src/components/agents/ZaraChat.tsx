@@ -341,13 +341,25 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
         </div>
         <button
           onClick={() => setShowPlanning(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-xs font-semibold shrink-0 min-h-[44px] hover:opacity-90 transition-opacity"
+          className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-xs font-semibold shrink-0 min-h-[44px] hover:opacity-90 transition-opacity"
           style={{ backgroundColor: '#C4607A' }}
         >
           <CalendarDays size={14} />
-          <span className="hidden sm:inline">Planning</span>
+          Planning
         </button>
       </header>
+
+      {/* Mobile full-width planning button */}
+      <div className="sm:hidden px-4 pt-3 flex-shrink-0">
+        <button
+          onClick={() => setShowPlanning(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+          style={{ backgroundColor: '#C4607A' }}
+        >
+          <CalendarDays size={16} />
+          Générer un planning
+        </button>
+      </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.map((msg, i) => (
