@@ -6,6 +6,9 @@ import Image from 'next/image'
 import { ClientConfig, Message } from '@/types'
 import ChatMessage from '@/components/chat/ChatMessage'
 import PlanningModal from '@/components/agents/PlanningModal'
+import PlanningCalendar from '@/components/agents/PlanningCalendar'
+import RelanceCard from '@/components/agents/RelanceCard'
+import CommunicationCard from '@/components/agents/CommunicationCard'
 import toast from 'react-hot-toast'
 import { ArrowLeft, Send, Copy, Check, FileDown, Mail, CalendarDays } from 'lucide-react'
 import VoiceMicButton from '@/components/chat/VoiceMicButton'
@@ -14,9 +17,14 @@ const ZARA_PHOTO = '/agents/ZARA.JPEG'
 
 const WELCOME_MESSAGE: Message = {
   role: 'assistant',
-  content: `Bonjour Rosa ! Je suis là pour vous aider dans votre quotidien.
-Planning, messages clients, courriers, annonces...
-Dites-moi ce dont vous avez besoin.`,
+  content: `Bonjour, je suis Zara, votre assistante Rosa Excavator.
+
+Je peux vous aider sur trois points :
+1. Planning hebdomadaire — décrivez les chantiers de la semaine
+2. Relance clients — indiquez quel client relancer et pourquoi
+3. Réponse client — collez un message reçu et je rédige la réponse
+
+Comment puis-je vous aider ?`,
   timestamp: new Date().toISOString(),
 }
 
@@ -24,6 +32,17 @@ type DocType = 'planning' | 'courrier' | 'annonce' | 'document' | null
 
 interface ExtendedMessage extends Message {
   docType?: DocType
+}
+
+interface PlanningData {
+  semaine: string
+  planning: { jour: string; date: string; assignations: { employe: string; tache: string }[] }[]
+}
+interface RelanceData {
+  messages: { canal: string; destinataire: string; message: string }[]
+}
+interface CommunicationData {
+  variantes: { ton: string; message: string }[]
 }
 
 async function loadLogo(): Promise<string | null> {
@@ -36,9 +55,7 @@ async function loadLogo(): Promise<string | null> {
       reader.onload = () => resolve(reader.result as string)
       reader.readAsDataURL(blob)
     })
-  } catch {
-    return null
-  }
+  } catch { return null }
 }
 
 const DARK: [number, number, number] = [26, 26, 26]
@@ -79,42 +96,28 @@ async function exportPlanningPDF(text: string) {
   const { default: jsPDF } = await import('jspdf')
   const doc = new jsPDF({ orientation: 'landscape' })
   const logo = await loadLogo()
-
-  // Extract week title from text if present
   const weekMatch = text.match(/PLANNING\s+SEMAINE\s+DU\s+[^\n]+/i)
   const subtitle = weekMatch ? weekMatch[0].trim() : 'PLANNING HEBDOMADAIRE'
   addPdfHeader(doc, logo, true, subtitle)
 
   const DAYS = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI', 'DIMANCHE']
   const employees = ['MARCUS MATHURIN', 'NICKY ANTOINE', 'WILLIAM JOSEPH-JULIEN']
-
-  const tableLeft = 15
-  const tableTop = 48
+  const tableLeft = 15, tableTop = 48
   const colWidths = [32, 80, 80, 82]
   const tableWidth = colWidths.reduce((a, b) => a + b, 0)
   const rowH = 22
-  const colStarts = [
-    tableLeft,
-    tableLeft + colWidths[0],
-    tableLeft + colWidths[0] + colWidths[1],
-    tableLeft + colWidths[0] + colWidths[1] + colWidths[2],
-  ]
+  const colStarts = [tableLeft, tableLeft + colWidths[0], tableLeft + colWidths[0] + colWidths[1], tableLeft + colWidths[0] + colWidths[1] + colWidths[2]]
 
-  // Header row
   doc.setFillColor(...DARK2)
   doc.rect(tableLeft, tableTop, tableWidth, 10, 'F')
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(8)
-  const headers = ['JOUR', ...employees]
-  headers.forEach((h, i) => {
-    doc.text(h, colStarts[i] + 4, tableTop + 7)
-  })
+  ;['JOUR', ...employees].forEach((h, i) => doc.text(h, colStarts[i] + 4, tableTop + 7))
 
-  // Parse lines into day buckets
-  type DayData = { day: string; cells: string[] }
-  const dayBuckets: DayData[] = []
-  let current: DayData | null = null
+  type DayBucket = { day: string; cells: string[] }
+  const dayBuckets: DayBucket[] = []
+  let current: DayBucket | null = null
   for (const line of text.split('\n')) {
     const upper = line.trim().toUpperCase()
     const foundDay = DAYS.find(d => upper.startsWith(d))
@@ -140,14 +143,10 @@ async function exportPlanningPDF(text: string) {
       doc.rect(tableLeft, y, tableWidth, rowH, 'F')
       doc.setDrawColor(224, 224, 224)
       doc.rect(tableLeft, y, tableWidth, rowH, 'S')
-
-      // Day cell — bold dark
       doc.setTextColor(51, 51, 51)
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(8.5)
       doc.text(row.day.substring(0, 20), colStarts[0] + 4, y + 9)
-
-      // Employee cells
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(8)
       doc.setTextColor(26, 26, 26)
@@ -159,7 +158,6 @@ async function exportPlanningPDF(text: string) {
       y += rowH
     })
   } else {
-    // Fallback plain text
     doc.setTextColor(26, 26, 26)
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(9)
@@ -171,7 +169,6 @@ async function exportPlanningPDF(text: string) {
       ty += 5.5
     }
   }
-
   addPdfFooter(doc, true)
   doc.save(`planning-rosa-${Date.now().toString().slice(-6)}.pdf`)
 }
@@ -181,7 +178,6 @@ async function exportCourrierPDF(text: string) {
   const doc = new jsPDF()
   const logo = await loadLogo()
   addPdfHeader(doc, logo, false)
-
   doc.setTextColor(26, 26, 26)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
@@ -192,7 +188,6 @@ async function exportCourrierPDF(text: string) {
     doc.text(line, 15, y)
     y += 6.5
   }
-
   addPdfFooter(doc, false)
   doc.save(`courrier-rosa-${Date.now().toString().slice(-6)}.pdf`)
 }
@@ -202,7 +197,6 @@ async function exportGenericPDF(text: string) {
   const doc = new jsPDF()
   const logo = await loadLogo()
   addPdfHeader(doc, logo, false)
-
   doc.setTextColor(26, 26, 26)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9.5)
@@ -213,7 +207,6 @@ async function exportGenericPDF(text: string) {
     doc.text(line, 15, y)
     y += 5.5
   }
-
   addPdfFooter(doc, false)
   doc.save(`zara-document-${Date.now().toString().slice(-6)}.pdf`)
 }
@@ -221,7 +214,7 @@ async function exportGenericPDF(text: string) {
 function getPdfLabel(docType: DocType): string {
   if (docType === 'planning') return 'Télécharger le planning PDF'
   if (docType === 'courrier') return 'Télécharger le courrier PDF'
-  if (docType === 'annonce') return 'Télécharger l\'annonce PDF'
+  if (docType === 'annonce') return "Télécharger l'annonce PDF"
   return 'Télécharger le document PDF'
 }
 
@@ -243,11 +236,56 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
   const [loading, setLoading] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [showPlanning, setShowPlanning] = useState(false)
+  const [planningData, setPlanningData] = useState<PlanningData | null>(null)
+  const [relanceData, setRelanceData] = useState<RelanceData | null>(null)
+  const [communicationData, setCommunicationData] = useState<CommunicationData | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, planningData, relanceData, communicationData])
+
+  async function callZara(msgs: ExtendedMessage[]) {
+    const apiMessages = msgs
+      .filter((m, i) => !(i === 0 && m.role === 'assistant'))
+      .map((m) => ({ role: m.role, content: m.content }))
+
+    const res = await fetch('/api/agents/zara', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: apiMessages, clientSlug: client.slug }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    return data
+  }
+
+  async function handleResponse(data: Record<string, unknown>) {
+    if (data.planning) {
+      setPlanningData(data.planning as PlanningData)
+      setRelanceData(null)
+      setCommunicationData(null)
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Planning généré — voir ci-dessous.', timestamp: new Date().toISOString() }])
+    } else if (data.relance) {
+      setRelanceData(data.relance as RelanceData)
+      setPlanningData(null)
+      setCommunicationData(null)
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Messages de relance générés — voir ci-dessous.', timestamp: new Date().toISOString() }])
+    } else if (data.communication) {
+      setCommunicationData(data.communication as CommunicationData)
+      setPlanningData(null)
+      setRelanceData(null)
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Réponses suggérées — voir ci-dessous.', timestamp: new Date().toISOString() }])
+    } else if (data.message) {
+      const text = data.message as string
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: text,
+        timestamp: new Date().toISOString(),
+        docType: (data.docType as DocType) ?? null,
+      }])
+    }
+  }
 
   async function sendWithText(text: string) {
     if (!text.trim() || loading) return
@@ -257,11 +295,8 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
     const updated = [...messages, userMsg]
     setMessages(updated)
     try {
-      const apiMessages = updated.filter((m, i) => !(i === 0 && m.role === 'assistant')).map((m) => ({ role: m.role, content: m.content }))
-      const res = await fetch('/api/agents/zara', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, clientSlug: client.slug }) })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.message, timestamp: new Date().toISOString(), docType: data.docType ?? null }])
+      const data = await callZara(updated)
+      await handleResponse(data)
     } catch { toast.error('Erreur de connexion. Réessayez.') }
     finally { setLoading(false) }
   }
@@ -269,38 +304,14 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault()
     if (!input.trim() || loading) return
-
-    const userMessage: ExtendedMessage = {
-      role: 'user',
-      content: input.trim(),
-      timestamp: new Date().toISOString(),
-    }
-
+    const userMessage: ExtendedMessage = { role: 'user', content: input.trim(), timestamp: new Date().toISOString() }
     const updatedMessages = [...messages, userMessage]
     setMessages(updatedMessages)
     setInput('')
     setLoading(true)
-
     try {
-      const apiMessages = updatedMessages
-        .filter((m, i) => !(i === 0 && m.role === 'assistant'))
-        .map((m) => ({ role: m.role, content: m.content }))
-
-      const res = await fetch('/api/agents/zara', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, clientSlug: client.slug }),
-      })
-
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-
-      setMessages((prev) => [...prev, {
-        role: 'assistant',
-        content: data.message,
-        timestamp: new Date().toISOString(),
-        docType: data.docType ?? null,
-      }])
+      const data = await callZara(updatedMessages)
+      await handleResponse(data)
     } catch {
       toast.error('Erreur de connexion. Réessayez.')
     } finally {
@@ -336,8 +347,8 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
           <Image src={ZARA_PHOTO} alt="Zara" fill className="object-cover object-top" />
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-white font-semibold text-sm leading-tight">Zara — Assistante Personnelle</h1>
-          <p className="text-zinc-500 text-xs">Planning, communications, documents...</p>
+          <h1 className="text-white font-semibold text-sm leading-tight">Zara — Assistante Polyvalente</h1>
+          <p className="text-zinc-500 text-xs">Planning · Relances · Communication</p>
         </div>
         <button
           onClick={() => setShowPlanning(true)}
@@ -361,21 +372,22 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+      <div className="flex-1 overflow-y-auto py-4 space-y-3">
         {messages.map((msg, i) => (
           <div key={i} className="group relative">
-            <ChatMessage
-              message={msg}
-              primaryColor="#6366f1"
-              agentName="Zara"
-              agentPhoto={ZARA_PHOTO}
-            />
+            <div className="px-4">
+              <ChatMessage
+                message={msg}
+                primaryColor="#6366f1"
+                agentName="Zara"
+                agentPhoto={ZARA_PHOTO}
+              />
+            </div>
             {msg.role === 'assistant' && i > 0 && (
-              <div className="flex flex-wrap gap-2 mt-1 ml-11">
+              <div className="flex flex-wrap gap-2 mt-1 ml-15 px-4">
                 <button
                   onClick={() => copyMessage(msg.content, i)}
                   className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-colors text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
-                  title="Copier"
                 >
                   {copiedIndex === i ? <Check size={12} /> : <Copy size={12} />}
                   <span>{copiedIndex === i ? 'Copié' : 'Copier'}</span>
@@ -384,7 +396,6 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
                   <button
                     onClick={() => exportPDF(msg.content, msg.docType!)}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-colors text-zinc-500 hover:text-white hover:bg-zinc-800"
-                    title="Exporter en PDF"
                   >
                     <FileDown size={12} />
                     <span>{getPdfLabel(msg.docType)}</span>
@@ -394,7 +405,6 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
                   <a
                     href={buildEmailLink(msg.content)}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-colors text-zinc-500 hover:text-white hover:bg-zinc-800"
-                    title="Envoyer par email"
                   >
                     <Mail size={12} />
                     <span>Envoyer par email</span>
@@ -404,8 +414,14 @@ export default function ZaraChat({ client }: { client: ClientConfig; userId: str
             )}
           </div>
         ))}
+
+        {/* Structured response panels */}
+        {planningData && <PlanningCalendar data={planningData} />}
+        {relanceData && <RelanceCard data={relanceData} />}
+        {communicationData && <CommunicationCard data={communicationData} />}
+
         {loading && (
-          <div className="flex gap-3">
+          <div className="flex gap-3 px-4">
             <div className="w-8 h-8 rounded-full overflow-hidden relative flex-shrink-0">
               <Image src={ZARA_PHOTO} alt="Zara" fill className="object-cover object-top" />
             </div>

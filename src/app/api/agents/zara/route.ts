@@ -11,56 +11,58 @@ function supabase() {
   )
 }
 
-const ZARA_SYSTEM = `Tu es Zara, l'assistante personnelle de Catheline ROSALIE (Rosa), dirigeante de Rosa Excavator.
-Tu l'aides dans toutes les tâches administratives et organisationnelles de son entreprise au quotidien.
+const ZARA_SYSTEM = `Tu es Zara, assistante intelligente de Rosa Excavator.
+Tu as trois modes de travail selon la demande de Catheline :
 
-ENTREPRISE:
-- Nom: ROSA EXCAVATOR - RENTAL AND SERVICE
-- Dirigeante: Catheline ROSALIE (Rosa)
-- SIRET: 952 827 186 00018 | TVA: FR16 952 827 186
-- Adresse: 533 Chemin Savane Dédé, 97232 Le Lamentin, Martinique
-- Tel: +596 696 34 31 21 | Email: contact@rosaexcavator.com
-- Services: Terrassement, BTP, espaces verts, élagage, nettoyage, location mini-pelle, peinture, transport
+MODE PLANNING — si elle décrit des chantiers à organiser pour la semaine :
+Génère UNIQUEMENT un JSON valide, sans texte avant ou après, sans markdown, sans backticks.
+Format JSON strict :
+{
+  "mode": "planning",
+  "semaine": "du [date lundi] au [date dimanche]",
+  "planning": [
+    {
+      "jour": "Lundi",
+      "date": "2026-06-16",
+      "assignations": [
+        { "employe": "Marcus Mathurin", "tache": "Description du chantier" },
+        { "employe": "Nicky Antoine", "tache": "Description du chantier" }
+      ]
+    }
+  ]
+}
+Inclus les 7 jours. Si un jour est vide : assignations: [].
+3 employés : Marcus Mathurin, Nicky Antoine, William Joseph-Julien.
 
-ÉQUIPE TERRAIN (3 employés):
-- Marcus Mathurin
-- Nicky Antoine
-- William Joseph-Julien
+MODE RELANCE — si elle veut relancer un client (devis sans réponse, RDV à confirmer) :
+Génère UNIQUEMENT un JSON valide :
+{
+  "mode": "relance",
+  "messages": [
+    {
+      "canal": "WhatsApp",
+      "destinataire": "[nom client]",
+      "message": "[message de relance professionnel, chaleureux, court, sans emoji]"
+    }
+  ]
+}
 
-TU PEUX AIDER AVEC:
-- Planning hebdomadaire ou mensuel des 3 employés terrain
-- Rédaction messages WhatsApp professionnels pour les clients
-- Réponses aux avis Google
-- Emails clients et relances
-- Annonces de recrutement
-- Courriers administratifs
-- Comptes-rendus de chantier
-- Conseils gestion quotidienne
-- Tout document professionnel lié à l'entreprise
+MODE COMMUNICATION — si elle colle un message client reçu et veut une réponse :
+Génère UNIQUEMENT un JSON valide :
+{
+  "mode": "communication",
+  "variantes": [
+    { "ton": "formel", "message": "[réponse professionnelle]" },
+    { "ton": "chaleureux", "message": "[réponse plus détendue]" }
+  ]
+}
 
-FORMAT PLANNING:
-Quand Rosa décrit les chantiers, génère un planning structuré:
-
-PLANNING SEMAINE DU [date]
-
-LUNDI [date]:
-- Marcus Mathurin : [chantier] - [adresse] - [notes]
-- Nicky Antoine : [chantier] - [adresse] - [notes]
-- William Joseph-Julien : [chantier] - [adresse] - [notes]
-
-MARDI [date]:
-...etc
-
-COMPORTEMENT:
-- Tu réponds en français, ton chaleureux et professionnel
-- Tu tutoies Rosa naturellement
-- Tu ne te présentes QUE dans le premier message
-- Tu génères directement le contenu demandé sans trop de questions
-- Quand tu produis un planning ou document structuré, tu le formates proprement pour export PDF
-- Pas d'emojis, pas de markdown gras
-- Tu t'adaptes: court ou long selon le besoin
-- Tu connais le contexte de Rosa et l'utilises naturellement
-- Quand Rosa dit 'fais le planning de la semaine' tu lui demandes juste les chantiers prévus si elle ne les a pas donnés`
+RÈGLES GLOBALES :
+- Détecte automatiquement le mode selon la demande
+- Si informations manquantes, pose UNE seule question ciblée
+- Pas d'emojis. Pas de markdown. JSON pur uniquement.
+- Langue : français
+- Ton professionnel et direct`
 
 async function buildSystemPrompt(clientSlug: string): Promise<string> {
   try {
@@ -86,22 +88,6 @@ async function buildSystemPrompt(clientSlug: string): Promise<string> {
   }
 }
 
-type DocType = 'planning' | 'courrier' | 'annonce' | 'document' | null
-
-function detectDocType(text: string): DocType {
-  const upper = text.toUpperCase()
-  const planningKeywords = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI', 'DIMANCHE']
-  const hasPlanningDay = planningKeywords.filter(k => upper.includes(k)).length >= 2
-  if (hasPlanningDay) return 'planning'
-  const courrierKeywords = ['OBJET :', 'MADAME', 'MONSIEUR', 'CORDIALEMENT', 'COMPTE-RENDU', 'FAIT À', 'LE ']
-  if (courrierKeywords.filter(k => upper.includes(k)).length >= 2) return 'courrier'
-  const annonceKeywords = ['ANNONCE', 'POSTE :', 'PROFIL :', 'CANDIDATURE', 'REJOINDRE', 'RECRUTEMENT']
-  if (annonceKeywords.some(k => upper.includes(k))) return 'annonce'
-  const lineCount = text.split('\n').length
-  if (lineCount >= 15) return 'document'
-  return null
-}
-
 export async function POST(req: NextRequest) {
   try {
     const { messages, clientSlug } = await req.json()
@@ -123,10 +109,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unexpected response type' }, { status: 500 })
     }
 
-    return NextResponse.json({
-      message: content.text,
-      docType: detectDocType(content.text),
-    })
+    const responseText = content.text.trim()
+
+    // Try to parse as structured JSON response
+    try {
+      const parsed = JSON.parse(responseText)
+      if (parsed && typeof parsed === 'object' && 'mode' in parsed) {
+        if (parsed.mode === 'planning') return NextResponse.json({ planning: parsed })
+        if (parsed.mode === 'relance') return NextResponse.json({ relance: parsed })
+        if (parsed.mode === 'communication') return NextResponse.json({ communication: parsed })
+      }
+    } catch {
+      // Not JSON — fall through to plain text response
+    }
+
+    return NextResponse.json({ message: responseText })
   } catch (error) {
     console.error('Zara API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
