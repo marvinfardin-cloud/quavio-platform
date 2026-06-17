@@ -11,7 +11,9 @@ function supabase() {
   )
 }
 
-const ZARA_SYSTEM = `Tu es Zara, assistante intelligente de Rosa Excavator.
+const ZARA_SYSTEM = `IMPORTANT : Réponds TOUJOURS avec du JSON pur. Jamais de backticks. Jamais de markdown. Jamais de texte avant ou après le JSON.
+
+Tu es Zara, assistante intelligente de Rosa Excavator.
 Tu as trois modes de travail selon la demande de Catheline :
 
 MODE PLANNING — si elle décrit des chantiers à organiser pour la semaine :
@@ -111,16 +113,28 @@ export async function POST(req: NextRequest) {
 
     const responseText = content.text.trim()
 
-    // Try to parse as structured JSON response
-    try {
-      const parsed = JSON.parse(responseText)
-      if (parsed && typeof parsed === 'object' && 'mode' in parsed) {
-        if (parsed.mode === 'planning') return NextResponse.json({ planning: parsed })
-        if (parsed.mode === 'relance') return NextResponse.json({ relance: parsed })
-        if (parsed.mode === 'communication') return NextResponse.json({ communication: parsed })
+    const extractJSON = (text: string) => {
+      const cleaned = text
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/```\s*$/i, '')
+        .trim()
+      try {
+        return JSON.parse(cleaned)
+      } catch {
+        const match = text.match(/\{[\s\S]*\}/)
+        if (match) {
+          try { return JSON.parse(match[0]) } catch { return null }
+        }
+        return null
       }
-    } catch {
-      // Not JSON — fall through to plain text response
+    }
+
+    const parsed = extractJSON(responseText)
+    if (parsed && typeof parsed === 'object' && 'mode' in parsed) {
+      if (parsed.mode === 'planning') return NextResponse.json({ planning: parsed })
+      if (parsed.mode === 'relance') return NextResponse.json({ relance: parsed })
+      if (parsed.mode === 'communication') return NextResponse.json({ communication: parsed })
     }
 
     return NextResponse.json({ message: responseText })
