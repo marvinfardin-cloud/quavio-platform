@@ -38,32 +38,44 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
     const canvas = await html2canvas(calendarRef.current, {
       backgroundColor: '#0A0A0A',
       scale: 2,
+      useCORS: true,
     })
     const imgData = canvas.toDataURL('image/png')
     const pdf = new jsPDF('landscape', 'mm', 'a4')
-    const pdfWidth = pdf.internal.pageSize.getWidth()
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight)
     pdf.save(`planning-rosa-${Date.now()}.pdf`)
   }
 
   return (
     <div className="px-4 pb-4">
+      {/* Fixed-size container so html2canvas captures full content at correct dimensions */}
       <div
         ref={calendarRef}
-        className="rounded-xl p-4"
-        style={{ backgroundColor: '#0A0A0A', border: '1px solid #1a1a1a' }}
+        className="rounded-xl p-5"
+        style={{
+          backgroundColor: '#0A0A0A',
+          border: '1px solid #1a1a1a',
+          width: '1123px',
+          minHeight: '600px',
+        }}
       >
         {/* Header */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/agents/rosa_logo.png" alt="Rosa" style={{ height: 36, objectFit: 'contain', background: 'white', borderRadius: '50%', padding: 2 }} />
-          <span className="text-white font-bold text-base">PLANNING SEMAINE</span>
-          <span className="text-zinc-400 text-sm">{data.semaine}</span>
+          <img
+            src="/agents/rosa_logo.png"
+            alt="Rosa"
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
+            style={{ height: 44, objectFit: 'contain', background: 'white', borderRadius: '50%', padding: 3 }}
+          />
+          <span style={{ color: '#fff', fontSize: 20, fontWeight: 'bold' }}>PLANNING SEMAINE</span>
+          <span style={{ color: '#a1a1aa', fontSize: 13 }}>{data.semaine}</span>
         </div>
 
         {/* Calendar grid */}
-        <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
+        <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
           {data.planning.map((day) => {
             const dateLabel = day.date
               ? new Date(day.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
@@ -72,41 +84,46 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
               <div key={day.jour}>
                 {/* Column header */}
                 <div
-                  className="text-center py-2 px-1 rounded-t-lg"
-                  style={{ backgroundColor: '#1E1E1E' }}
+                  className="text-center rounded-t-lg"
+                  style={{ backgroundColor: '#1E1E1E', padding: '12px 8px' }}
                 >
-                  <div className="text-white font-semibold text-xs leading-tight">{day.jour}</div>
+                  <div style={{ color: '#fff', fontSize: 14, fontWeight: 600, lineHeight: 1.2 }}>{day.jour}</div>
                   {dateLabel && (
-                    <div className="text-zinc-500 text-[10px] mt-0.5">{dateLabel}</div>
+                    <div style={{ color: '#71717a', fontSize: 11, marginTop: 3 }}>{dateLabel}</div>
                   )}
                 </div>
                 {/* Cell */}
                 <div
-                  className="rounded-b-lg p-1.5"
-                  style={{ backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', minHeight: 100 }}
+                  className="rounded-b-lg"
+                  style={{
+                    backgroundColor: '#1A1A1A',
+                    border: '1px solid #2A2A2A',
+                    minHeight: 160,
+                    padding: 12,
+                  }}
                 >
-                  {day.assignations.length === 0 ? (
-                    <div className="h-full" />
-                  ) : (
-                    day.assignations.map((a, i) => {
-                      const color = EMPLOYEE_COLORS[a.employe] ?? '#888'
-                      return (
-                        <div
-                          key={i}
-                          className="mb-1 rounded-r-md px-1.5 py-1"
-                          style={{
-                            borderLeft: `3px solid ${color}`,
-                            backgroundColor: '#111',
-                          }}
-                        >
-                          <div className="font-bold text-[10px] leading-tight" style={{ color }}>
-                            {a.employe.split(' ')[0]}
-                          </div>
-                          <div className="text-zinc-300 text-[10px] mt-0.5 leading-tight">{a.tache}</div>
+                  {day.assignations.map((a, i) => {
+                    const color = EMPLOYEE_COLORS[a.employe] ?? '#888'
+                    return (
+                      <div
+                        key={i}
+                        style={{
+                          borderLeft: `4px solid ${color}`,
+                          backgroundColor: '#111',
+                          padding: '8px 10px',
+                          marginBottom: 8,
+                          borderRadius: '0 6px 6px 0',
+                        }}
+                      >
+                        <div style={{ color, fontSize: 13, fontWeight: 'bold', lineHeight: 1.3 }}>
+                          {a.employe.split(' ')[0]}
                         </div>
-                      )
-                    })
-                  )}
+                        <div style={{ color: '#d4d4d8', fontSize: 12, marginTop: 3, lineHeight: 1.4 }}>
+                          {a.tache}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )
@@ -114,11 +131,11 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
         </div>
 
         {/* Legend */}
-        <div className="flex gap-6 mt-4 justify-center flex-wrap">
+        <div className="flex gap-8 mt-5 justify-center flex-wrap">
           {EMPLOYEES.map(emp => (
             <div key={emp} className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: EMPLOYEE_COLORS[emp] }} />
-              <span className="text-zinc-400 text-sm">{emp}</span>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: EMPLOYEE_COLORS[emp], flexShrink: 0 }} />
+              <span style={{ color: '#a1a1aa', fontSize: 13 }}>{emp}</span>
             </div>
           ))}
         </div>
