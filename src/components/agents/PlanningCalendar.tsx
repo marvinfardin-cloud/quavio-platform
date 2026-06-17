@@ -31,6 +31,86 @@ const EMPLOYEES = ['Marcus Mathurin', 'Nicky Antoine', 'William Joseph-Julien']
 export default function PlanningCalendar({ data }: PlanningCalendarProps) {
   const calendarRef = useRef<HTMLDivElement>(null)
 
+  const exportEmployeePDF = async () => {
+    const { default: jsPDF } = await import('jspdf')
+
+    const pdf = new jsPDF('portrait', 'mm', 'a4')
+    const pW = 210
+    const pH = 297
+    const pM = 15
+
+    pdf.setFillColor(10, 10, 10)
+    pdf.rect(0, 0, pW, pH, 'F')
+
+    pdf.setFontSize(14)
+    pdf.setTextColor(255, 255, 255)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('DÉTAIL PAR EMPLOYÉ', pW / 2, 20, { align: 'center' })
+
+    pdf.setFontSize(9)
+    pdf.setTextColor(160, 160, 160)
+    pdf.setFont('helvetica', 'normal')
+    pdf.text(data.semaine, pW / 2, 28, { align: 'center' })
+
+    const employees: { name: string; color: [number, number, number] }[] = [
+      { name: 'Marcus Mathurin', color: [74, 144, 217] },
+      { name: 'Nicky Antoine', color: [39, 174, 96] },
+      { name: 'William Joseph-Julien', color: [230, 126, 34] },
+    ]
+
+    let y = 38
+
+    employees.forEach((emp, ei) => {
+      pdf.setFillColor(...emp.color)
+      pdf.rect(pM, y, pW - pM * 2, 10, 'F')
+      pdf.setFontSize(11)
+      pdf.setTextColor(255, 255, 255)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(emp.name, pM + 4, y + 7)
+      y += 13
+
+      const daysForEmp = data.planning.filter(d =>
+        d.assignations.some(a => a.employe === emp.name)
+      )
+
+      if (daysForEmp.length === 0) {
+        pdf.setFontSize(9)
+        pdf.setTextColor(100, 100, 100)
+        pdf.setFont('helvetica', 'italic')
+        pdf.text('Aucune assignation cette semaine', pM + 4, y + 5)
+        y += 10
+      } else {
+        daysForEmp.forEach((day) => {
+          const tache = day.assignations.find(a => a.employe === emp.name)?.tache ?? ''
+          const dateLabel = day.date
+            ? new Date(day.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+            : ''
+
+          pdf.setFontSize(9)
+          pdf.setTextColor(255, 255, 255)
+          pdf.setFont('helvetica', 'bold')
+          pdf.text(`${day.jour}${dateLabel ? ` ${dateLabel}` : ''}`, pM + 4, y + 5)
+
+          pdf.setFont('helvetica', 'normal')
+          pdf.setTextColor(180, 180, 180)
+          const wrappedLines = pdf.splitTextToSize(tache, pW - pM * 2 - 8)
+          wrappedLines.forEach((line: string, li: number) => {
+            pdf.text(line, pM + 4, y + 11 + li * 5)
+          })
+          y += 10 + wrappedLines.length * 5 + 3
+        })
+      }
+
+      if (ei < employees.length - 1) {
+        pdf.setDrawColor(40, 40, 40)
+        pdf.line(pM, y + 2, pW - pM, y + 2)
+        y += 10
+      }
+    })
+
+    pdf.save(`planning-employes-${Date.now()}.pdf`)
+  }
+
   const exportPDF = async () => {
     const { default: jsPDF } = await import('jspdf')
 
@@ -337,14 +417,22 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
         </div>
       </div>
 
-      {/* Export button — outside calendarRef, not captured in PDF */}
-      <button
-        onClick={exportPDF}
-        className="block mx-auto mt-3 px-5 py-2 rounded-lg text-white text-sm font-semibold hover:opacity-90 transition-opacity"
-        style={{ backgroundColor: '#C4607A' }}
-      >
-        Exporter en PDF
-      </button>
+      {/* Export buttons — outside calendarRef, not captured in PDF */}
+      <div className="flex gap-3 justify-center mt-3">
+        <button
+          onClick={exportPDF}
+          className="px-5 py-2 rounded-lg text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+          style={{ backgroundColor: '#C4607A' }}
+        >
+          Exporter en PDF
+        </button>
+        <button
+          onClick={exportEmployeePDF}
+          className="px-4 py-2 rounded-lg text-white text-sm font-semibold hover:opacity-80 transition-opacity bg-zinc-700"
+        >
+          Vue employés
+        </button>
+      </div>
     </div>
   )
 }
