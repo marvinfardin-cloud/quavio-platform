@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
-import { FileText } from 'lucide-react'
+import { FileText, CalendarDays } from 'lucide-react'
 import { getClientConfig } from '@/lib/clients'
 import { AGENTS } from '@/types'
 import SetupBanner from '@/components/dashboard/SetupBanner'
@@ -93,6 +93,22 @@ export default async function DashboardPage({
               </Link>
             )
           })}
+
+          {/* Planning card */}
+          <Link
+            href={`/${clientSlug}/planning`}
+            className="relative overflow-hidden rounded-2xl flex flex-col cursor-pointer group"
+            style={{ background: 'linear-gradient(135deg, #27272a, #18181b)' }}
+          >
+            <div className="w-full flex items-center justify-center" style={{ height: 'clamp(160px, 40vw, 270px)' }}>
+              <CalendarDays style={{ color: '#C4607A', opacity: 0.7, width: 'clamp(48px, 12vw, 80px)', height: 'clamp(48px, 12vw, 80px)' }} />
+            </div>
+            <div className="flex flex-col justify-center px-4 py-3 lg:px-5">
+              <p className="text-white font-bold text-sm lg:text-base leading-tight">Planning</p>
+              <p className="text-xs lg:text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>Générateur de planning hebdomadaire</p>
+            </div>
+            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-5 transition-opacity rounded-2xl" />
+          </Link>
 
           {/* Devis history card */}
           <Link

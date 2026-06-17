@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Settings } from 'lucide-react'
+import { Home, Settings, CalendarDays } from 'lucide-react'
 
 const PRIMARY = '#C4607A'
 
@@ -24,6 +24,7 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
   { key: 'dashboard', icon: Home, label: 'Accueil', href: (slug: string) => `/${slug}/dashboard` },
+  { key: 'planning', icon: CalendarDays, label: 'Planning', href: (slug: string) => `/${slug}/planning` },
   { key: 'devis', icon: null, label: 'Mes devis', href: (slug: string) => `/${slug}/devis` },
   { key: 'settings', icon: Settings, label: 'Paramètres', href: (slug: string) => `/${slug}/settings` },
 ]
