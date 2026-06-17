@@ -50,19 +50,19 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
 
   return (
     <div className="px-4 pb-4">
-      {/* Fixed-size container so html2canvas captures full content at correct dimensions */}
+      {/* Fixed-size 1123px container = A4 landscape at 96dpi — html2canvas captures this */}
       <div
         ref={calendarRef}
-        className="rounded-xl p-5"
+        className="rounded-xl"
         style={{
           backgroundColor: '#0A0A0A',
           border: '1px solid #1a1a1a',
           width: '1123px',
-          minHeight: '600px',
+          padding: '32px',
         }}
       >
         {/* Header */}
-        <div className="flex justify-between items-center mb-5">
+        <div className="flex justify-between items-center" style={{ marginBottom: 24 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/agents/rosa_logo.png"
@@ -75,7 +75,7 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
         </div>
 
         {/* Calendar grid */}
-        <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
           {data.planning.map((day) => {
             const dateLabel = day.date
               ? new Date(day.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
@@ -84,22 +84,26 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
               <div key={day.jour}>
                 {/* Column header */}
                 <div
-                  className="text-center rounded-t-lg"
-                  style={{ backgroundColor: '#1E1E1E', padding: '12px 8px' }}
+                  style={{
+                    backgroundColor: '#1E1E1E',
+                    padding: '14px 8px',
+                    borderRadius: '8px 8px 0 0',
+                    textAlign: 'center',
+                  }}
                 >
-                  <div style={{ color: '#fff', fontSize: 14, fontWeight: 600, lineHeight: 1.2 }}>{day.jour}</div>
+                  <div style={{ color: '#fff', fontSize: 15, fontWeight: 600, lineHeight: 1.2 }}>{day.jour}</div>
                   {dateLabel && (
-                    <div style={{ color: '#71717a', fontSize: 11, marginTop: 3 }}>{dateLabel}</div>
+                    <div style={{ color: '#71717a', fontSize: 12, marginTop: 4 }}>{dateLabel}</div>
                   )}
                 </div>
                 {/* Cell */}
                 <div
-                  className="rounded-b-lg"
                   style={{
                     backgroundColor: '#1A1A1A',
                     border: '1px solid #2A2A2A',
-                    minHeight: 160,
-                    padding: 12,
+                    borderRadius: '0 0 8px 8px',
+                    minHeight: 180,
+                    padding: 14,
                   }}
                 >
                   {day.assignations.map((a, i) => {
@@ -110,15 +114,17 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
                         style={{
                           borderLeft: `4px solid ${color}`,
                           backgroundColor: '#111',
-                          padding: '8px 10px',
-                          marginBottom: 8,
+                          padding: '10px 12px',
+                          marginBottom: 12,
                           borderRadius: '0 6px 6px 0',
+                          wordBreak: 'break-word',
+                          whiteSpace: 'normal',
                         }}
                       >
                         <div style={{ color, fontSize: 13, fontWeight: 'bold', lineHeight: 1.3 }}>
                           {a.employe.split(' ')[0]}
                         </div>
-                        <div style={{ color: '#d4d4d8', fontSize: 12, marginTop: 3, lineHeight: 1.4 }}>
+                        <div style={{ color: '#d4d4d8', fontSize: 12, marginTop: 4, lineHeight: 1.4 }}>
                           {a.tache}
                         </div>
                       </div>
@@ -131,9 +137,9 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
         </div>
 
         {/* Legend */}
-        <div className="flex gap-8 mt-5 justify-center flex-wrap">
+        <div style={{ display: 'flex', gap: 32, marginTop: 24, justifyContent: 'center', flexWrap: 'wrap' }}>
           {EMPLOYEES.map(emp => (
-            <div key={emp} className="flex items-center gap-2">
+            <div key={emp} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: EMPLOYEE_COLORS[emp], flexShrink: 0 }} />
               <span style={{ color: '#a1a1aa', fontSize: 13 }}>{emp}</span>
             </div>
