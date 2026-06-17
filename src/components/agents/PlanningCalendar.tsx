@@ -158,6 +158,86 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
       pdf.text(item.name, lx + 4, legendY)
     })
 
+    // ── Page 2: Portrait — detail per employee ───────────────────
+    pdf.addPage('a4', 'portrait')
+    const p2W = 210
+    const p2H = 297
+    const p2M = 15
+
+    pdf.setFillColor(10, 10, 10)
+    pdf.rect(0, 0, p2W, p2H, 'F')
+
+    pdf.setFontSize(14)
+    pdf.setTextColor(255, 255, 255)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('DÉTAIL PAR EMPLOYÉ', p2W / 2, 20, { align: 'center' })
+
+    pdf.setFontSize(9)
+    pdf.setTextColor(160, 160, 160)
+    pdf.setFont('helvetica', 'normal')
+    pdf.text(data.semaine, p2W / 2, 28, { align: 'center' })
+
+    const p2Employees: { name: string; color: [number, number, number] }[] = [
+      { name: 'Marcus Mathurin', color: [74, 144, 217] },
+      { name: 'Nicky Antoine', color: [39, 174, 96] },
+      { name: 'William Joseph-Julien', color: [230, 126, 34] },
+    ]
+
+    let p2Y = 38
+
+    p2Employees.forEach((emp, ei) => {
+      // Employee header band
+      pdf.setFillColor(...emp.color)
+      pdf.rect(p2M, p2Y, p2W - p2M * 2, 10, 'F')
+      pdf.setFontSize(11)
+      pdf.setTextColor(255, 255, 255)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(emp.name, p2M + 4, p2Y + 7)
+      p2Y += 13
+
+      // Days with this employee
+      const daysForEmp = data.planning.filter(d =>
+        d.assignations.some(a => a.employe === emp.name)
+      )
+
+      if (daysForEmp.length === 0) {
+        pdf.setFontSize(9)
+        pdf.setTextColor(100, 100, 100)
+        pdf.setFont('helvetica', 'italic')
+        pdf.text('Aucune assignation cette semaine', p2M + 4, p2Y + 5)
+        p2Y += 10
+      } else {
+        daysForEmp.forEach((day) => {
+          const tache = day.assignations.find(a => a.employe === emp.name)?.tache ?? ''
+          const dateLabel = day.date
+            ? new Date(day.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+            : ''
+
+          // Day label
+          pdf.setFontSize(9)
+          pdf.setTextColor(255, 255, 255)
+          pdf.setFont('helvetica', 'bold')
+          pdf.text(`${day.jour}${dateLabel ? ` ${dateLabel}` : ''}`, p2M + 4, p2Y + 5)
+
+          // Task text (wrapped)
+          pdf.setFont('helvetica', 'normal')
+          pdf.setTextColor(180, 180, 180)
+          const wrappedLines = pdf.splitTextToSize(tache, p2W - p2M * 2 - 8)
+          wrappedLines.forEach((line: string, li: number) => {
+            pdf.text(line, p2M + 4, p2Y + 11 + li * 5)
+          })
+          p2Y += 10 + wrappedLines.length * 5 + 3
+        })
+      }
+
+      // Separator between employees (not after last)
+      if (ei < p2Employees.length - 1) {
+        pdf.setDrawColor(40, 40, 40)
+        pdf.line(p2M, p2Y + 2, p2W - p2M, p2Y + 2)
+        p2Y += 10
+      }
+    })
+
     pdf.save(`planning-rosa-${Date.now()}.pdf`)
   }
 
