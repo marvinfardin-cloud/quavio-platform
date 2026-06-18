@@ -335,20 +335,20 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
   const exportEmployeePDF = async () => {
     const { default: jsPDF } = await import('jspdf')
     const pdf = new jsPDF('portrait', 'mm', 'a4')
-    const pW = 210, pH = 297, pM = 15
+    const pageW = 210, pageH = 297
 
     pdf.setFillColor(10, 10, 10)
-    pdf.rect(0, 0, pW, pH, 'F')
+    pdf.rect(0, 0, pageW, pageH, 'F')
 
     pdf.setFontSize(14)
     pdf.setTextColor(255, 255, 255)
     pdf.setFont('helvetica', 'bold')
-    pdf.text('DÉTAIL PAR EMPLOYÉ', pW / 2, 18, { align: 'center' })
+    pdf.text('DÉTAIL PAR EMPLOYÉ', pageW / 2, 18, { align: 'center' })
 
     pdf.setFontSize(9)
     pdf.setTextColor(160, 160, 160)
     pdf.setFont('helvetica', 'normal')
-    pdf.text(data.semaine, pW / 2, 25, { align: 'center' })
+    pdf.text(data.semaine, pageW / 2, 25, { align: 'center' })
 
     const employees: { name: string; color: [number, number, number] }[] = [
       { name: 'Marcus Mathurin', color: [74, 144, 217] },
@@ -356,58 +356,76 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
       { name: 'William Joseph-Julien', color: [230, 126, 34] },
     ]
 
-    let y = 34
+    let currentY = 35
 
-    employees.forEach((emp, ei) => {
+    employees.forEach((emp) => {
+      const empAssignations = data.planning.filter(d =>
+        d.assignations?.some(a => a.employe === emp.name)
+      )
+
+      if (empAssignations.length === 0) return
+
+      // Estimate height: header 12mm + each day ~10mm + gap 8mm
+      const neededHeight = 12 + empAssignations.length * 10 + 8
+
+      if (currentY + neededHeight > pageH - 15) {
+        pdf.addPage()
+        pdf.setFillColor(10, 10, 10)
+        pdf.rect(0, 0, pageW, pageH, 'F')
+        currentY = 15
+      }
+
+      // Employee header bar
       pdf.setFillColor(...emp.color)
-      pdf.rect(pM, y, pW - pM * 2, 10, 'F')
+      pdf.rect(15, currentY, 180, 10, 'F')
       pdf.setFontSize(10)
       pdf.setTextColor(255, 255, 255)
       pdf.setFont('helvetica', 'bold')
-      pdf.text(emp.name, pM + 4, y + 7)
-      y += 13
+      pdf.text(emp.name, 18, currentY + 7)
+      currentY += 14
 
-      const daysForEmp = data.planning.filter(d =>
-        d.assignations.some(a => a.employe === emp.name)
-      )
+      // Days with tasks only
+      empAssignations.forEach((dayData) => {
+        const assignation = dayData.assignations.find(a => a.employe === emp.name)
+        if (!assignation) return
 
-      if (daysForEmp.length === 0) {
+        const raw = dayData.date
+          ? new Date(dayData.date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+          : dayData.jour
+        const dateLabel = raw.charAt(0).toUpperCase() + raw.slice(1)
+
         pdf.setFontSize(8)
-        pdf.setTextColor(100, 100, 100)
-        pdf.setFont('helvetica', 'italic')
-        pdf.text('Aucune assignation cette semaine', pM + 4, y + 4)
-        y += 8
-      } else {
-        daysForEmp.forEach((day) => {
-          const tache = day.assignations.find(a => a.employe === emp.name)?.tache ?? ''
-          const dateLabel = day.date
-            ? new Date(day.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
-            : ''
-          pdf.setFontSize(8)
-          pdf.setTextColor(255, 255, 255)
-          pdf.setFont('helvetica', 'bold')
-          pdf.text(`${day.jour}${dateLabel ? ` ${dateLabel}` : ''}`, pM + 4, y + 4)
-          pdf.setFont('helvetica', 'normal')
-          pdf.setTextColor(180, 180, 180)
-          const wrapped = pdf.splitTextToSize(tache, 180) as string[]
-          wrapped.forEach((line, li) => {
-            pdf.text(line, pM + 4, y + 9 + li * 5)
-          })
-          y += 8 + wrapped.length * 5 + 2
-        })
-      }
+        pdf.setTextColor(255, 255, 255)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(dateLabel, 18, currentY)
 
-      if (ei < employees.length - 1) {
-        pdf.setDrawColor(40, 40, 40)
-        pdf.line(pM, y + 2, pW - pM, y + 2)
-        y += 8
-      }
+        pdf.setFontSize(8)
+        pdf.setTextColor(180, 180, 180)
+        pdf.setFont('helvetica', 'normal')
+        const lines = pdf.splitTextToSize(assignation.tache, 174) as string[]
+        lines.forEach((line, li) => {
+          pdf.text(line, 18, currentY + 4 + li * 4)
+        })
+
+        currentY += 6 + lines.length * 4
+      })
+
+      currentY += 8
+
+      // Separator
+      pdf.setDrawColor(50, 50, 50)
+      pdf.setLineWidth(0.3)
+      pdf.line(15, currentY - 4, 195, currentY - 4)
     })
 
-    pdf.setFontSize(7)
-    pdf.setTextColor(100, 100, 100)
+    // Footer on last page
+    pdf.setFontSize(6)
+    pdf.setTextColor(80, 80, 80)
     pdf.setFont('helvetica', 'normal')
-    pdf.text('Rosa Excavator | contact@rosaexcavator.com', pW / 2, pH - 5, { align: 'center' })
+    pdf.text(
+      'Rosa Excavator | contact@rosaexcavator.com | SIRET : 952 827 186 00018',
+      105, pageH - 5, { align: 'center' }
+    )
 
     pdf.save(`planning-employes-${Date.now()}.pdf`)
   }
