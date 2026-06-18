@@ -1,7 +1,5 @@
 'use client'
 
-import { useRef } from 'react'
-
 interface Assignation {
   employe: string
   tache: string
@@ -190,23 +188,146 @@ function CalendarGrid({ data, large }: { data: PlanningCalendarProps['data']; la
 }
 
 export default function PlanningCalendar({ data }: PlanningCalendarProps) {
-  const calendarRef = useRef<HTMLDivElement>(null)
-
-  // ── Weekly landscape PDF (html2canvas on hidden 1123px div) ──
+  // ── Weekly landscape PDF (pure jsPDF draw) ──
   const exportWeeklyPDF = async () => {
-    if (!calendarRef.current) return
-    const { default: html2canvas } = await import('html2canvas')
     const { default: jsPDF } = await import('jspdf')
-    const canvas = await html2canvas(calendarRef.current, {
-      backgroundColor: '#0A0A0A',
-      scale: 2,
-      useCORS: true,
-    })
-    const imgData = canvas.toDataURL('image/png')
+
+    const W = 297
+    const H = 210
+    const margin = 8
+    const cols = 7
+    const colW = (W - margin * 2) / cols
+
     const pdf = new jsPDF('landscape', 'mm', 'a4')
-    const pageWidth = pdf.internal.pageSize.getWidth()
-    const pageHeight = pdf.internal.pageSize.getHeight()
-    pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight)
+
+    // Full dark background
+    pdf.setFillColor(10, 10, 10)
+    pdf.rect(0, 0, W, H, 'F')
+
+    // Logo (attempt)
+    try {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.src = window.location.origin + '/agents/rosa_logo.png'
+      await new Promise<void>(r => { img.onload = () => r(); img.onerror = () => r() })
+      if (img.naturalWidth > 0) {
+        const c = document.createElement('canvas')
+        c.width = img.naturalWidth
+        c.height = img.naturalHeight
+        c.getContext('2d')!.drawImage(img, 0, 0)
+        pdf.addImage(c.toDataURL('image/png'), 'PNG', margin, 4, 16, 16)
+      }
+    } catch { /* logo is optional */ }
+
+    // Header text
+    pdf.setFontSize(13)
+    pdf.setTextColor(255, 255, 255)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('PLANNING SEMAINE', W / 2, 12, { align: 'center' })
+
+    pdf.setFontSize(8)
+    pdf.setTextColor(150, 150, 150)
+    pdf.setFont('helvetica', 'normal')
+    pdf.text(data.semaine, W - margin, 12, { align: 'right' })
+
+    const headerTop = 20
+    const headerH = 12
+    const bodyTop = headerTop + headerH
+    const bodyH = H - bodyTop - 16
+    const rowH = bodyH / 3
+
+    const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+    const employees: { name: string; color: [number, number, number] }[] = [
+      { name: 'Marcus Mathurin', color: [74, 144, 217] },
+      { name: 'Nicky Antoine', color: [39, 174, 96] },
+      { name: 'William Joseph-Julien', color: [230, 126, 34] },
+    ]
+
+    // Column headers
+    days.forEach((day, i) => {
+      const x = margin + i * colW
+      pdf.setFillColor(30, 30, 30)
+      pdf.roundedRect(x + 0.5, headerTop, colW - 1, headerH, 1.5, 1.5, 'F')
+
+      pdf.setFontSize(8)
+      pdf.setTextColor(255, 255, 255)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(day, x + colW / 2, headerTop + 5, { align: 'center' })
+
+      const dayData = data.planning.find(d => d.jour === day)
+      if (dayData?.date) {
+        const dateStr = new Date(dayData.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+        pdf.setFontSize(6.5)
+        pdf.setTextColor(120, 120, 120)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text(dateStr, x + colW / 2, headerTop + 9.5, { align: 'center' })
+      }
+    })
+
+    // Employee rows
+    employees.forEach((emp, empIdx) => {
+      const rowTop = bodyTop + empIdx * rowH
+      const bg = empIdx % 2 === 0 ? 18 : 22
+
+      pdf.setFillColor(bg, bg, bg)
+      pdf.rect(margin, rowTop, W - margin * 2, rowH, 'F')
+
+      // Color accent bar on left edge
+      pdf.setFillColor(...emp.color)
+      pdf.rect(margin, rowTop, 2, rowH, 'F')
+
+      const firstName = emp.name.split(' ')[0]
+
+      days.forEach((day, dayIdx) => {
+        const x = margin + dayIdx * colW
+        const dayData = data.planning.find(d => d.jour === day)
+        const assignation = dayData?.assignations?.find(a => a.employe === emp.name)
+
+        // Cell border
+        pdf.setDrawColor(40, 40, 40)
+        pdf.setLineWidth(0.3)
+        pdf.rect(x + 0.5, rowTop + 0.5, colW - 1, rowH - 1)
+
+        if (assignation) {
+          pdf.setFontSize(7)
+          pdf.setTextColor(...emp.color)
+          pdf.setFont('helvetica', 'bold')
+          pdf.text(firstName, x + 3, rowTop + 6)
+
+          pdf.setFontSize(6.5)
+          pdf.setTextColor(200, 200, 200)
+          pdf.setFont('helvetica', 'normal')
+          const lines = pdf.splitTextToSize(assignation.tache, colW - 5)
+          const maxLines = Math.floor((rowH - 10) / 4)
+          ;(lines as string[]).slice(0, maxLines).forEach((line, li) => {
+            pdf.text(line, x + 3, rowTop + 12 + li * 4)
+          })
+        } else {
+          pdf.setFontSize(8)
+          pdf.setTextColor(50, 50, 50)
+          pdf.text('—', x + colW / 2, rowTop + rowH / 2, { align: 'center' })
+        }
+      })
+    })
+
+    // Legend
+    const legendY = H - 8
+    const legendStartX = W / 2 - 55
+    employees.forEach((emp, i) => {
+      const lx = legendStartX + i * 40
+      pdf.setFillColor(...emp.color)
+      pdf.circle(lx, legendY - 1.5, 1.5, 'F')
+      pdf.setFontSize(7)
+      pdf.setTextColor(150, 150, 150)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(emp.name, lx + 4, legendY)
+    })
+
+    // Footer
+    pdf.setFontSize(6)
+    pdf.setTextColor(80, 80, 80)
+    pdf.text('Rosa Excavator | contact@rosaexcavator.com | SIRET : 952 827 186 00018', W / 2, H - 3, { align: 'center' })
+
     pdf.save(`planning-semaine-${Date.now()}.pdf`)
   }
 
@@ -268,8 +389,8 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
           pdf.text(`${day.jour}${dateLabel ? ` ${dateLabel}` : ''}`, pM + 4, y + 4)
           pdf.setFont('helvetica', 'normal')
           pdf.setTextColor(180, 180, 180)
-          const wrapped = pdf.splitTextToSize(tache, 180)
-          wrapped.forEach((line: string, li: number) => {
+          const wrapped = pdf.splitTextToSize(tache, 180) as string[]
+          wrapped.forEach((line, li) => {
             pdf.text(line, pM + 4, y + 9 + li * 5)
           })
           y += 8 + wrapped.length * 5 + 2
@@ -296,22 +417,6 @@ export default function PlanningCalendar({ data }: PlanningCalendarProps) {
       {/* ── Visible calendar (responsive, mobile-first) ─────────── */}
       <div className="w-full overflow-x-auto rounded-xl p-3" style={{ backgroundColor: '#0A0A0A' }}>
         <CalendarGrid data={data} large={false} />
-      </div>
-
-      {/* ── Hidden 1123px div for html2canvas capture ────────────── */}
-      <div
-        ref={calendarRef}
-        style={{
-          position: 'fixed',
-          left: '-9999px',
-          top: 0,
-          width: '1123px',
-          backgroundColor: '#0A0A0A',
-          padding: '32px',
-          zIndex: -1,
-        }}
-      >
-        <CalendarGrid data={data} large={true} />
       </div>
 
       {/* ── Export buttons ─────────────────────────────────────────── */}
