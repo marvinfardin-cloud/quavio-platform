@@ -109,7 +109,7 @@ function CalendarGrid({ data, large }: { data: PlanningCalendarProps['data']; la
                   backgroundColor: '#1A1A1A',
                   border: '1px solid #2A2A2A',
                   borderRadius: '0 0 6px 6px',
-                  minHeight: large ? 160 : 90,
+                  minHeight: large ? 200 : 90,
                   padding: large ? 12 : 6,
                 }}
               >
@@ -121,7 +121,7 @@ function CalendarGrid({ data, large }: { data: PlanningCalendarProps['data']; la
                       style={{
                         borderLeft: `${large ? 3 : 2}px solid ${color}`,
                         backgroundColor: '#111',
-                        padding: large ? '8px 10px' : '4px 6px',
+                        padding: large ? '10px 12px' : '4px 6px',
                         marginBottom: large ? 8 : 4,
                         borderRadius: '0 4px 4px 0',
                         wordBreak: 'break-word',
@@ -143,6 +143,10 @@ function CalendarGrid({ data, large }: { data: PlanningCalendarProps['data']; la
                           fontSize: large ? 12 : 10,
                           marginTop: large ? 3 : 1,
                           lineHeight: large ? 1.4 : 1.3,
+                          display: '-webkit-box',
+                          WebkitLineClamp: large ? 3 : 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
                         }}
                       >
                         {a.tache}
