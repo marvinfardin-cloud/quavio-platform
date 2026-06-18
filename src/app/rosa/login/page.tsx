@@ -1,26 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 export default function RosaLoginPage() {
-  const router = useRouter()
   const [password, setPassword] = useState('')
   const [error, setError] = useState(false)
-  const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
-    setError(false)
-
     if (password === 'rosa2026') {
-      // Set cookie via API route, then redirect
-      await fetch('/api/auth/rosa', { method: 'POST' })
-      router.push('/rosa/dashboard')
+      document.cookie = 'rosa_auth=true; max-age=259200; path=/'
+      window.location.href = '/rosa/dashboard'
     } else {
       setError(true)
-      setLoading(false)
     }
   }
 
@@ -29,7 +21,6 @@ export default function RosaLoginPage() {
       className="min-h-screen flex flex-col items-center justify-center px-4"
       style={{ backgroundColor: '#0A0A0A', fontFamily: 'var(--font-space-grotesk)' }}
     >
-      {/* Logo */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/agents/rosa_logo.png"
@@ -48,16 +39,12 @@ export default function RosaLoginPage() {
           <input
             type="password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={e => { setPassword(e.target.value); setError(false) }}
             placeholder="Mot de passe"
             required
             autoFocus
             className="w-full px-4 py-3 rounded-xl text-white placeholder-zinc-600 outline-none"
-            style={{
-              backgroundColor: '#111',
-              border: '1px solid #2a2a2a',
-              fontSize: '16px',
-            }}
+            style={{ backgroundColor: '#111', border: '1px solid #2a2a2a', fontSize: '16px' }}
           />
 
           {error && (
@@ -66,14 +53,14 @@ export default function RosaLoginPage() {
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl text-white font-semibold text-base transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="w-full py-3 rounded-xl text-white font-semibold text-base transition-opacity hover:opacity-90"
             style={{ backgroundColor: '#C4607A' }}
           >
-            {loading ? 'Vérification...' : 'Accéder'}
+            Accéder
           </button>
         </form>
       </div>
     </div>
   )
 }
+
