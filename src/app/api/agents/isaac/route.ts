@@ -11,67 +11,86 @@ function supabase() {
   )
 }
 
-const ISAAC_SYSTEM = `Tu es Isaac, assistant devis pour ROSA EXCAVATOR - RENTAL AND SERVICE (travaux d'excavation et terrassement en Martinique).
+const ISAAC_SYSTEM = `Tu es Isaac, un assistant expert en création de devis pour ROSA Excavator, entreprise de travaux extérieurs basée au Lamentin, Martinique.
 
-Comportement :
-- Présente-toi uniquement dans le tout premier message. Jamais après.
-- Pas de markdown gras (**texte**), pas d'emojis.
-- Ton de collègue, naturel et direct.
-- Maximum 2 questions à la fois.
-- Dès que tu as les infos nécessaires, génère le devis immédiatement sans demander confirmation.
-- Si Rosa donne toutes les infos en une seule fois, génère le devis directement.
+SERVICES PROPOSÉS PAR ROSA :
+- Terrassement et excavation (mini-pelle)
+- Location de mini-pelle
+- Voiries et réseaux divers (VRD)
+- BTP : Gros œuvre et maçonnerie
+- Création de dalle, allée pas japonais, trottoir
+- Mur de soutènement (bloc Vauban, bancher)
+- Création de parking
+- Clôture et portail
+- Peinture intérieure et extérieure / Rénovation
+- Élagage et taille d'arbustes
+- Jardinage et entretien espaces verts mensuel
+- Remise en état espace vert
+- Nettoyage haute pression
+- Transport de matériaux / évacuation déchets verts
 
-Infos requises : nom client, adresse chantier, prestations + quantités.
+TVA : 8.5% (taux Martinique, pas 20%)
+SIRET : 952 827 186 00018
+Adresse : 533 Chemin Savane Dédé, 97232 Le Lamentin
+Email : contact@rosaexcavator.com
+Tél : +596 696 34 31 21
 
-Format de devis obligatoire (texte brut, pas de bloc de code) :
+Quand l'utilisateur décrit un chantier, tu dois :
+1. Poser des questions pour clarifier les informations manquantes (nom client, adresse, détail des prestations, quantités, superficie)
+2. Une fois que tu as toutes les informations, générer le devis en JSON avec ce format exact :
 
-CLIENT: [nom complet]
-ADRESSE: [adresse chantier]
-PRESTATIONS:
-- [désignation] | [quantité] [unité] | [prix unitaire HT] €
-TOTAL HT: [montant] €
-TVA 8.5%: [montant] €
-TOTAL TTC: [montant] €
+\`\`\`json
+{
+  "devis": {
+    "clientName": "Nom du client",
+    "clientAddress": "Adresse complète",
+    "services": [
+      {
+        "description": "Description de la prestation",
+        "quantity": 10,
+        "unit": "m²",
+        "unitPrice": 45,
+        "total": 450
+      }
+    ],
+    "totalHT": 450,
+    "tva": 38.25,
+    "totalTTC": 488.25
+  }
+}
+\`\`\`
 
-TVA : 8.5% (Martinique). Calcule les totaux. Réponds en français.`
+Le taux de TVA est 8.5% (Martinique).
+Calcule automatiquement les totaux.
+Maximum 2 questions de clarification avant de générer.
+Pas d'emojis. Pas de markdown dans les réponses texte.
+Réponds toujours en français.`
 
 function parseDevis(text: string) {
-  if (!text.includes('CLIENT:') || !text.includes('TOTAL TTC:')) return null
-
   try {
-    const clientMatch = text.match(/CLIENT:\s*(.+)/)
-    const adresseMatch = text.match(/ADRESSE:\s*(.+)/)
+    // Strip markdown code fences if present
+    const cleaned = text
+      .replace(/^```json\s*/im, '')
+      .replace(/^```\s*/im, '')
+      .replace(/```\s*$/im, '')
+      .trim()
 
-    const servicesSection = text.match(/PRESTATIONS:\n([\s\S]*?)(?:\nTOTAL HT:)/)
-    const services: Array<{ description: string; quantity: number; unit: string; unitPrice: number; total: number }> = []
+    // Find JSON object in the text
+    const match = cleaned.match(/\{[\s\S]*\}/)
+    if (!match) return null
 
-    if (servicesSection) {
-      const lines = servicesSection[1].split('\n').filter((l) => l.trim().startsWith('-'))
-      for (const line of lines) {
-        const parts = line.replace(/^-\s*/, '').split('|').map((s) => s.trim())
-        if (parts.length >= 3) {
-          const description = parts[0]
-          const qtyUnit = parts[1].split(' ')
-          const quantity = parseFloat(qtyUnit[0].replace(',', '.')) || 1
-          const unit = qtyUnit.slice(1).join(' ') || 'u'
-          const rawPrice = parts[2].replace(/[^\d,. ]/g, '').replace(/\s/g, '').replace(',', '.')
-          const unitPrice = parseFloat(rawPrice) || 0
-          const total = Math.round(quantity * unitPrice * 100) / 100
-          services.push({ description, quantity, unit, unitPrice, total })
-        }
-      }
-    }
+    const parsed = JSON.parse(match[0])
+    const d = parsed?.devis
+    if (!d || !Array.isArray(d.services) || !d.services.length) return null
 
-    if (!services.length) return null
-
-    const sumHT = Math.round(services.reduce((acc, s) => acc + s.total, 0) * 100) / 100
+    const sumHT = Math.round(d.services.reduce((acc: number, s: { total: number }) => acc + (s.total ?? 0), 0) * 100) / 100
     const finalTva = Math.round(sumHT * 0.085 * 100) / 100
     const finalTTC = Math.round((sumHT + finalTva) * 100) / 100
 
     return {
-      clientName: clientMatch?.[1]?.trim() ?? 'Client',
-      clientAddress: adresseMatch?.[1]?.trim() ?? '',
-      services,
+      clientName: d.clientName ?? 'Client',
+      clientAddress: d.clientAddress ?? '',
+      services: d.services,
       totalHT: sumHT,
       tva: finalTva,
       totalTTC: finalTTC,
