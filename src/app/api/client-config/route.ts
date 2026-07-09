@@ -8,6 +8,24 @@ function supabaseAdmin() {
   )
 }
 
+export async function GET(req: NextRequest) {
+  const clientSlug = req.nextUrl.searchParams.get('clientSlug')
+  if (!clientSlug) {
+    return NextResponse.json({ error: 'clientSlug required' }, { status: 400 })
+  }
+  try {
+    const { data, error } = await supabaseAdmin()
+      .from('client_config')
+      .select('company_name,slogan,siret,tva_number,address,tel,email')
+      .eq('client_slug', clientSlug)
+      .single()
+    if (error) return NextResponse.json({ data: null })
+    return NextResponse.json({ data })
+  } catch {
+    return NextResponse.json({ data: null })
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()

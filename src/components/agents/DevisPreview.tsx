@@ -17,11 +17,41 @@ function hexToRgb(hex: string): [number, number, number] {
   return [r, g, b]
 }
 
-async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: string) {
+interface CompanyConfig {
+  company_name: string | null
+  slogan: string | null
+  siret: string | null
+  tva_number: string | null
+  address: string | null
+  tel: string | null
+  email: string | null
+}
+
+const FALLBACK: CompanyConfig = {
+  company_name: 'Rosa Excavator — Rental and Service',
+  slogan: "Avec ROSA, chaque projet est guidé par la passion de l'embellissement extérieur",
+  siret: '952 827 186 00018',
+  tva_number: 'FR16 952 827 186',
+  address: '533 Chemin Savane Dédé, 97232 Le Lamentin',
+  tel: '+596 696 34 31 21',
+  email: 'contact@rosaexcavator.com',
+}
+
+async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: string, company: CompanyConfig) {
   const { default: jsPDF } = await import('jspdf')
   const doc = new jsPDF()
   const [pr, pg, pb] = hexToRgb(client.primaryColor)
   const date = new Date().toLocaleDateString('fr-FR')
+
+  const co = {
+    company_name: company.company_name || FALLBACK.company_name!,
+    slogan: company.slogan || FALLBACK.slogan!,
+    siret: company.siret || FALLBACK.siret!,
+    tva_number: company.tva_number || FALLBACK.tva_number!,
+    address: company.address || FALLBACK.address!,
+    tel: company.tel || FALLBACK.tel!,
+    email: company.email || FALLBACK.email!,
+  }
 
   // ── Load logo ────────────────────────────────────────────────
   let logoDataUrl: string | null = null
@@ -56,16 +86,16 @@ async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: str
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(16)
-  doc.text('Rosa Excavator — Rental and Service', textX, 20)
+  doc.text(co.company_name, textX, 20)
 
   doc.setFont('helvetica', 'italic')
   doc.setFontSize(7.5)
-  doc.text("Avec ROSA, chaque projet est guidé par la passion de l'embellissement extérieur", textX, 29)
+  doc.text(co.slogan, textX, 29)
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
-  doc.text('533 Chemin Savane Dédé, 97232 Le Lamentin', textX, 38)
-  doc.text('Tél : +596 696 34 31 21   |   contact@rosaexcavator.com', textX, 46)
+  doc.text(co.address, textX, 38)
+  doc.text(`Tél : ${co.tel}   |   ${co.email}`, textX, 46)
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
@@ -150,10 +180,11 @@ async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: str
   doc.setTextColor(153, 153, 153)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7)
-  doc.text(
-    'ROSA EXCAVATOR - RENTAL AND SERVICE  |  SIRET : 952 827 186 00018  |  N° TVA : FR16 952 827 186  |  533 Chemin Savane Dédé, 97232 Le Lamentin',
-    105, 280, { align: 'center' }
-  )
+  const footerParts = [co.company_name.toUpperCase()]
+  if (co.siret) footerParts.push(`SIRET : ${co.siret}`)
+  if (co.tva_number) footerParts.push(`N° TVA : ${co.tva_number}`)
+  if (co.address) footerParts.push(co.address)
+  doc.text(footerParts.join('  |  '), 105, 280, { align: 'center' })
   doc.text('Devis valable 30 jours  |  Acompte 30% à la commande', 105, 286, { align: 'center' })
 
   return doc
@@ -167,7 +198,18 @@ export default function DevisPreview({ devis, client }: DevisPreviewProps) {
   async function downloadPDF() {
     const devisNum = `DEV-${Date.now().toString().slice(-6)}`
     setLastDevisNum(devisNum)
-    const doc = await buildPdfDoc(devis, client, devisNum)
+
+    // Fetch company config for dynamic header/footer
+    let company: CompanyConfig = { ...FALLBACK }
+    try {
+      const res = await fetch(`/api/client-config?clientSlug=${client.slug}`)
+      if (res.ok) {
+        const json = await res.json()
+        if (json.data) company = json.data
+      }
+    } catch {}
+
+    const doc = await buildPdfDoc(devis, client, devisNum, company)
     const pdfBase64 = doc.output('datauristring')
 
     // Save to Supabase (fire-and-forget — don't block the download)
