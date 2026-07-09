@@ -43,14 +43,17 @@ async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: str
   const [pr, pg, pb] = hexToRgb(client.primaryColor)
   const date = new Date().toLocaleDateString('fr-FR')
 
+  // Collapse multiline fields to single line (textarea may contain \n)
+  const oneLine = (s: string) => s.replace(/\s*\n\s*/g, ', ').trim()
+
   const co = {
-    company_name: company.company_name || FALLBACK.company_name!,
-    slogan: company.slogan || FALLBACK.slogan!,
-    siret: company.siret || FALLBACK.siret!,
-    tva_number: company.tva_number || FALLBACK.tva_number!,
-    address: company.address || FALLBACK.address!,
-    tel: company.tel || FALLBACK.tel!,
-    email: company.email || FALLBACK.email!,
+    company_name: oneLine(company.company_name || FALLBACK.company_name!),
+    slogan: oneLine(company.slogan || FALLBACK.slogan!),
+    siret: oneLine(company.siret || FALLBACK.siret!),
+    tva_number: oneLine(company.tva_number || FALLBACK.tva_number!),
+    address: oneLine(company.address || FALLBACK.address!),
+    tel: oneLine(company.tel || FALLBACK.tel!),
+    email: oneLine(company.email || FALLBACK.email!),
   }
 
   // ── Load logo ────────────────────────────────────────────────
@@ -180,12 +183,14 @@ async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: str
   doc.setTextColor(153, 153, 153)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7)
-  const footerParts = [co.company_name.toUpperCase()]
-  if (co.siret) footerParts.push(`SIRET : ${co.siret}`)
-  if (co.tva_number) footerParts.push(`N° TVA : ${co.tva_number}`)
-  if (co.address) footerParts.push(co.address)
-  doc.text(footerParts.join('  |  '), 105, 280, { align: 'center' })
-  doc.text('Devis valable 30 jours  |  Acompte 30% à la commande', 105, 286, { align: 'center' })
+  const footerLine1Parts = [co.company_name.toUpperCase()]
+  if (co.siret) footerLine1Parts.push(`SIRET : ${co.siret}`)
+  if (co.tva_number) footerLine1Parts.push(`N° TVA : ${co.tva_number}`)
+  doc.text(footerLine1Parts.join('  |  '), 105, 278, { align: 'center' })
+  if (co.address) {
+    doc.text(co.address, 105, 283, { align: 'center' })
+  }
+  doc.text('Devis valable 30 jours  |  Acompte 30% à la commande', 105, 288, { align: 'center' })
 
   return doc
 }
