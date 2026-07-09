@@ -68,22 +68,24 @@ export default function SettingsPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase.from('client_config').upsert({
-        client_slug: clientSlug,
-        company_name: config.companyName,
-        slogan: config.slogan,
-        siret: config.siret,
-        tva_number: config.tvaNumber,
-        address: config.address,
-        tel: config.tel,
-        email: config.email,
-        services_pricing: config.servicesPricing,
-        additional_context: config.additionalContext,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'client_slug' })
+      const res = await fetch('/api/client-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientSlug,
+          company_name: config.companyName,
+          slogan: config.slogan,
+          siret: config.siret,
+          tva_number: config.tvaNumber,
+          address: config.address,
+          tel: config.tel,
+          email: config.email,
+          services_pricing: config.servicesPricing,
+          additional_context: config.additionalContext,
+        }),
+      })
 
-      if (error) throw error
+      if (!res.ok) throw new Error('Save failed')
 
       setSaved(true)
       toast.success('Configuration sauvegardée')
