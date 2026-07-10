@@ -186,11 +186,8 @@ async function buildPdfDoc(devis: DevisData, client: ClientConfig, devisNum: str
   const footerLine1Parts = [co.company_name.toUpperCase()]
   if (co.siret) footerLine1Parts.push(`SIRET : ${co.siret}`)
   if (co.tva_number) footerLine1Parts.push(`N° TVA : ${co.tva_number}`)
-  doc.text(footerLine1Parts.join('  |  '), 105, 278, { align: 'center' })
-  if (co.address) {
-    doc.text(co.address, 105, 283, { align: 'center' })
-  }
-  doc.text('Devis valable 30 jours  |  Acompte 30% à la commande', 105, 288, { align: 'center' })
+  doc.text(footerLine1Parts.join('  |  '), 105, 281, { align: 'center' })
+  doc.text('Devis valable 30 jours  |  Acompte 30% à la commande', 105, 287, { align: 'center' })
 
   return doc
 }
